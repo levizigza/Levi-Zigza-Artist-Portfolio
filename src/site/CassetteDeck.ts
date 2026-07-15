@@ -3,6 +3,8 @@
  * Placeholder tones via Web Audio when /public/audio/{id}.mp3 is missing.
  */
 
+import { withBase } from '../content/withBase'
+
 const INSERT_MS = 920
 const CLOSE_MS = 320
 const EJECT_MS = 480
@@ -140,7 +142,8 @@ export class CassetteDeck {
     this.deck?.classList.add('is-loaded')
 
     this.audio?.pause()
-    const src = tape.dataset.src || `/audio/${tape.dataset.track ?? 'track'}.mp3`
+    const src =
+      tape.dataset.src || withBase(`/audio/${tape.dataset.track ?? 'track'}.mp3`)
     this.audio = new Audio(src)
     this.audio.preload = 'none'
     this.audio.loop = true

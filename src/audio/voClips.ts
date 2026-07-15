@@ -5,8 +5,9 @@
  */
 
 import { MONOLOGUE } from '../content/monologue'
+import { withBase } from '../content/withBase'
 
-export const VO_BASE = '/audio/vo'
+export const VO_BASE = withBase('/audio/vo')
 
 /** Stable clip path for a monologue cue index (`line-00.mp3`). */
 export function voClipUrl(index: number): string {
