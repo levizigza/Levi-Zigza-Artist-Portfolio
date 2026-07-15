@@ -1,0 +1,13 @@
+{
+  "items": [
+    {
+      "id": "dd2bf9a9-9f02-4f7c-a594-7cbd266cef47",
+      "type": "script",
+      "title": "Smoke Script",
+      "path": "/uploads/script/dd2bf9a9-smoke.txt",
+      "mime": "text/plain",
+      "createdAt": "2026-07-15T21:50:20.992Z",
+      "originalName": "smoke.txt"
+    }
+  ]
+}

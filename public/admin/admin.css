@@ -1,0 +1,232 @@
+:root {
+  --bg0: #0b0a0e;
+  --bg1: #16121c;
+  --ink: #f2e8d8;
+  --muted: #a89888;
+  --accent: #e8a060;
+  --line: rgba(232, 160, 96, 0.28);
+  --danger: #e06060;
+  --ok: #7dffb4;
+  --font-display: "Syne", system-ui, sans-serif;
+  --font-mono: "Share Tech Mono", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: var(--font-display);
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(232, 160, 96, 0.12), transparent 45%),
+    radial-gradient(ellipse at 90% 80%, rgba(80, 120, 200, 0.1), transparent 40%),
+    linear-gradient(165deg, var(--bg0), var(--bg1) 55%, #0e1016);
+}
+
+.admin-shell {
+  width: min(640px, 92vw);
+  margin: 0 auto;
+  padding: 2.5rem 0 4rem;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.admin-brand {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.admin-badge {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--line);
+  padding: 0.2rem 0.5rem;
+}
+
+.ghost-btn {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font: inherit;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+}
+
+.ghost-btn:hover {
+  color: var(--ink);
+}
+
+.panel {
+  border: 1px solid var(--line);
+  background: rgba(18, 14, 22, 0.72);
+  padding: 1.5rem 1.4rem 1.75rem;
+  backdrop-filter: blur(8px);
+}
+
+.panel h1 {
+  margin: 0 0 0.4rem;
+  font-size: 1.55rem;
+  font-weight: 700;
+}
+
+.panel h2.list-heading {
+  margin: 2rem 0 0.75rem;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hint {
+  margin: 0 0 1.25rem;
+  color: var(--muted);
+  line-height: 1.45;
+  font-size: 0.95rem;
+}
+
+.hint code,
+.limits code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: var(--accent);
+}
+
+.stack {
+  display: grid;
+  gap: 0.9rem;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+input,
+select,
+button[type="submit"] {
+  font: inherit;
+  border-radius: 0;
+}
+
+input,
+select {
+  padding: 0.65rem 0.7rem;
+  border: 1px solid var(--line);
+  background: rgba(8, 6, 12, 0.85);
+  color: var(--ink);
+}
+
+button[type="submit"] {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--accent);
+  background: linear-gradient(180deg, rgba(232, 160, 96, 0.28), rgba(232, 160, 96, 0.12));
+  color: var(--ink);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+button[type="submit"]:hover {
+  background: linear-gradient(180deg, rgba(232, 160, 96, 0.4), rgba(232, 160, 96, 0.18));
+}
+
+.limits {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+.status {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.status.ok {
+  color: var(--ok);
+}
+
+.status.bad {
+  color: var(--danger);
+}
+
+.manifest-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.manifest-empty {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.manifest-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid rgba(232, 160, 96, 0.16);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.manifest-meta {
+  min-width: 0;
+}
+
+.manifest-title {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manifest-sub {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+
+.delete-btn {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid rgba(224, 96, 96, 0.45);
+  background: transparent;
+  color: var(--danger);
+  padding: 0.35rem 0.55rem;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background: rgba(224, 96, 96, 0.12);
+}

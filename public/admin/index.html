@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BALYAOKO Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/admin/admin.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <header class="admin-header">
+        <a class="admin-brand" href="/">BALYAOKO</a>
+        <span class="admin-badge">Admin</span>
+        <button type="button" id="logout-btn" class="ghost-btn" hidden>Log out</button>
+      </header>
+
+      <section id="login-panel" class="panel">
+        <h1>Chamber upload</h1>
+        <p class="hint">Sign in with <code>ADMIN_PASSWORD</code> from your <code>.env</code>.</p>
+        <form id="login-form" class="stack">
+          <label>
+            Password
+            <input type="password" name="password" autocomplete="current-password" required />
+          </label>
+          <button type="submit">Enter</button>
+          <p id="login-error" class="error" role="alert" hidden></p>
+        </form>
+      </section>
+
+      <section id="upload-panel" class="panel" hidden>
+        <h1>Upload media</h1>
+        <p class="hint">
+          Files land in <code>public/uploads/</code> and appear in chamber pages via the manifest.
+        </p>
+        <form id="upload-form" class="stack">
+          <label>
+            Chamber
+            <select name="type" required>
+              <option value="video">Film / Video</option>
+              <option value="photo">Photo darkroom</option>
+              <option value="audio">Music (cassette)</option>
+              <option value="script">Scripts (tablet)</option>
+            </select>
+          </label>
+          <label>
+            Title
+            <input type="text" name="title" maxlength="120" placeholder="Optional — defaults to filename" />
+          </label>
+          <label>
+            File
+            <input type="file" name="file" required />
+          </label>
+          <p class="limits">
+            Video: mp4/webm/mov · Photo: jpg/png/webp/gif · Audio: mp3/wav/ogg/m4a · Scripts: txt/md
+          </p>
+          <button type="submit">Upload</button>
+          <p id="upload-status" class="status" role="status" hidden></p>
+        </form>
+
+        <h2 class="list-heading">Manifest</h2>
+        <div id="manifest-list" class="manifest-list"></div>
+      </section>
+    </div>
+    <script type="module" src="/admin/admin.js"></script>
+  </body>
+</html>

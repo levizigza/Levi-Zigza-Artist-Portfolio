@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="BALYAOKO — a creative cosmos of video, music, scripts, and photography."
+    />
+    <title>BALYAOKO — Creative Cosmos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Sora:wght@400;600;700&family=Share+Tech+Mono&family=Syne:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="journey-canvas" aria-hidden="true"></canvas>
+
+      <!-- Gate: potentiality → eye cosmos (canvas) + Enter hit + press cue -->
+      <div id="gate" class="gate" role="dialog" aria-label="Enter">
+        <div class="gate-atmosphere" aria-hidden="true"></div>
+
+        <button
+          type="button"
+          id="ankh-enter"
+          class="brain-enter"
+          aria-label="Enter — awaken the universe"
+        >
+          <span class="brain-enter-sr">Begin</span>
+        </button>
+
+        <p class="gate-press-enter" aria-hidden="true">
+          press <span class="gate-enter-kbd">ENTER</span>
+        </p>
+      </div>
+
+      <button
+        type="button"
+        id="mute-toggle"
+        class="mute-toggle"
+        aria-pressed="false"
+        aria-label="Mute sound"
+        title="Mute"
+      >
+        <svg class="mute-icon mute-icon-on" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path
+            fill="currentColor"
+            d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"
+          />
+        </svg>
+        <svg class="mute-icon mute-icon-off" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path
+            fill="currentColor"
+            d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3 3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4 9.91 6.09 12 8.18V4z"
+          />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        id="skip-intro"
+        class="skip-intro is-hidden"
+        aria-label="Skip intro"
+        aria-hidden="true"
+        tabindex="-1"
+      >
+        Skip intro
+      </button>
+
+      <!-- Journey chrome + subtitle captions -->
+      <div id="journey-ui" class="journey-ui hidden" aria-hidden="true">
+        <div class="journey-chrome">
+          <h1 class="brand brand-journey">BALYAOKO</h1>
+        </div>
+
+        <button
+          type="button"
+          id="subs-toggle"
+          class="subs-toggle"
+          aria-pressed="true"
+          aria-label="Toggle subtitles"
+          title="Subtitles"
+        >
+          CC
+        </button>
+
+        <div id="monologue" class="monologue" aria-live="polite">
+          <p id="monologue-text" class="monologue-text"></p>
+        </div>
+
+        <button
+          type="button"
+          id="journey-ankh"
+          class="journey-ankh"
+          aria-label="Enter the site"
+        >
+          <span class="journey-enter-mark" aria-hidden="true"></span>
+          <span class="hint-text">press ENTER</span>
+        </button>
+
+        <div class="journey-progress">
+          <div class="progress-track">
+            <div id="progress-fill" class="progress-fill"></div>
+          </div>
+          <p id="progress-label" class="progress-label">0%</p>
+        </div>
+      </div>
+
+      <div id="transition-veil" class="transition-veil" aria-hidden="true"></div>
+
+      <main id="site" class="site hidden" data-chamber="home" aria-hidden="true">
+        <div class="site-atmosphere" aria-hidden="true">
+          <div class="site-nebula"></div>
+          <div class="site-first-light"></div>
+          <div class="site-solar-orbit"></div>
+          <div class="site-dust"></div>
+          <div class="planet-sky"></div>
+          <div class="planet-horizon"></div>
+          <div class="planet-ground"></div>
+        </div>
+
+        <canvas id="world-canvas" class="world-canvas" aria-hidden="true"></canvas>
+
+        <div id="teleport-stage" class="teleport-stage" aria-hidden="true">
+          <canvas id="teleport-canvas" class="teleport-canvas"></canvas>
+          <div class="teleport-emitter" aria-hidden="true"></div>
+          <div class="teleport-column" aria-hidden="true"></div>
+          <div class="teleport-floor" aria-hidden="true"></div>
+        </div>
+        <div id="planetfall-veil" class="planetfall-veil" aria-hidden="true"></div>
+
+        <header class="site-header">
+          <div class="site-brand-block">
+            <p class="site-signal">ORBITAL HUB</p>
+            <a href="#home" class="site-brand" data-nav="home">BALYAOKO</a>
+          </div>
+          <nav class="site-tabs" aria-label="Chamber worlds">
+            <a href="#home" class="site-tab active" data-nav="home">
+              <span class="tab-glyph" aria-hidden="true">✦</span>
+              <span class="tab-label">Hub</span>
+            </a>
+            <a href="#video" class="site-tab" data-nav="video">
+              <span class="tab-glyph" aria-hidden="true">▣</span>
+              <span class="tab-label">Video</span>
+            </a>
+            <a href="#music" class="site-tab" data-nav="music">
+              <span class="tab-glyph" aria-hidden="true">◎</span>
+              <span class="tab-label">Music</span>
+            </a>
+            <a href="#scripts" class="site-tab" data-nav="scripts">
+              <span class="tab-glyph" aria-hidden="true">〡</span>
+              <span class="tab-label">Scripts</span>
+            </a>
+            <a href="#photography" class="site-tab" data-nav="photography">
+              <span class="tab-glyph" aria-hidden="true">◇</span>
+              <span class="tab-label">Photo</span>
+            </a>
+          </nav>
+          <button type="button" id="return-journey" class="return-btn">
+            ⟵ Cosmos
+          </button>
+        </header>
+
+        <section id="page-home" class="site-page chamber-home active" data-page="home">
+          <div class="chamber-living home-living" aria-hidden="true">
+            <div class="planet-flora home-flora">
+              <span class="flora-shard"></span>
+              <span class="flora-shard"></span>
+              <span class="flora-shard"></span>
+              <span class="flora-shard"></span>
+            </div>
+            <div class="home-columns">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <div class="home-orbit"></div>
+          </div>
+          <p class="eyebrow">Orbital hub · Four arts planets</p>
+          <h2 class="kinetic-title">
+            <span class="kt-line">Worlds born from</span>
+            <span class="kt-line accent">a crack in the quiet</span>
+          </h2>
+          <p class="lede">
+            Planetfall begins here. Choose a world of making — picture, tone,
+            word, or held light — each with its own sky and weather.
+          </p>
+          <p id="lore-quote" class="lore-quote" hidden></p>
+          <div class="chamber-portals">
+            <a href="#video" class="portal" data-nav="video" data-portal="video">
+              <span class="portal-beat"></span>
+              <span class="portal-code">01 · JUPITER</span>
+              <span class="portal-name">Video</span>
+              <span class="portal-sub">Vertical film strip</span>
+            </a>
+            <a href="#music" class="portal" data-nav="music" data-portal="music">
+              <span class="portal-beat"></span>
+              <span class="portal-code">02 · SATURN</span>
+              <span class="portal-name">Music</span>
+              <span class="portal-sub">Cassette deck orbit</span>
+            </a>
+            <a href="#scripts" class="portal" data-nav="scripts" data-portal="scripts">
+              <span class="portal-beat"></span>
+              <span class="portal-code">03 · MERCURY</span>
+              <span class="portal-name">Scripts</span>
+              <span class="portal-sub">Sacred tablet</span>
+            </a>
+            <a href="#photography" class="portal" data-nav="photography" data-portal="photography">
+              <span class="portal-beat"></span>
+              <span class="portal-code">04 · MARS</span>
+              <span class="portal-name">Photography</span>
+              <span class="portal-sub">Red-room darkroom</span>
+            </a>
+          </div>
+        </section>
+
+        <section id="page-video" class="site-page chamber-video" data-page="video">
+          <div class="chamber-living video-living" aria-hidden="true">
+            <div class="planet-flora film-flora">
+              <span class="band-stripe b1"></span>
+              <span class="band-stripe b2"></span>
+              <span class="band-stripe b3"></span>
+            </div>
+            <div class="jupiter-haze"></div>
+          </div>
+          <p class="eyebrow">Planetfall · Jupiter — Film Strip</p>
+          <h2 class="kinetic-title">
+            <span class="kt-line">Film</span>
+            <span class="kt-line accent soft">frames in the strip</span>
+          </h2>
+          <p class="lede">
+            A vertical reel unspools through banded skies. Celluloid slots wait
+            for the next cut — signal dormant, light still learning how to move.
+          </p>
+          <div class="film-strip" data-chamber="video" aria-label="Film strip gallery">
+            <div class="film-sprockets film-sprockets-left" aria-hidden="true"></div>
+            <div class="film-frames">
+              <article class="film-frame" data-delay="0">
+                <div class="film-cell">
+                  <div class="film-grain"></div>
+                  <span class="film-sigil">◎</span>
+                  <span class="film-timecode">00:00:01</span>
+                </div>
+                <span class="altar-label">Signal dormant</span>
+              </article>
+              <article class="film-frame" data-delay="1">
+                <div class="film-cell">
+                  <div class="film-grain"></div>
+                  <span class="film-sigil">▣</span>
+                  <span class="film-timecode">00:00:02</span>
+                </div>
+                <span class="altar-label">Frame reserved</span>
+              </article>
+              <article class="film-frame" data-delay="2">
+                <div class="film-cell">
+                  <div class="film-grain"></div>
+                  <span class="film-sigil">◈</span>
+                  <span class="film-timecode">00:00:03</span>
+                </div>
+                <span class="altar-label">Awaiting cut</span>
+              </article>
+              <article class="film-frame film-frame-empty" data-delay="3" aria-hidden="true">
+                <div class="film-cell">
+                  <div class="film-grain"></div>
+                  <span class="film-sigil">·</span>
+                </div>
+                <span class="altar-label">Leader</span>
+              </article>
+            </div>
+            <div class="film-sprockets film-sprockets-right" aria-hidden="true"></div>
+          </div>
+        </section>
+
+        <section id="page-music" class="site-page chamber-music" data-page="music">
+          <div class="chamber-living music-living" aria-hidden="true">
+            <div class="planet-flora music-flora">
+              <span class="vinyl-arc a1"></span>
+              <span class="vinyl-arc a2"></span>
+              <span class="vinyl-arc a3"></span>
+            </div>
+            <div class="saturn-aurora" aria-hidden="true"></div>
+          </div>
+          <p class="eyebrow">Planetfall · Saturn — Walkman</p>
+          <h2 class="kinetic-title">
+            <span class="kt-line">Music</span>
+            <span class="kt-line accent soft">insert a tape</span>
+          </h2>
+          <p class="lede">
+            Ring-light weather over a waiting Walkman. Choose a cassette —
+            it floats up, the door opens, and the rings hum.
+          </p>
+          <div class="cassette-stage" data-chamber="music">
+            <div class="walkman tape-deck" id="tape-deck" role="region" aria-label="Portable cassette player">
+              <div class="walkman-body">
+                <div class="walkman-top">
+                  <span class="walkman-mark">ORBIT</span>
+                  <span class="walkman-led" id="walkman-led" aria-hidden="true"></span>
+                </div>
+                <div class="walkman-chassis">
+                  <div class="walkman-window" id="walkman-window">
+                    <div class="walkman-door" id="walkman-door" aria-hidden="true">
+                      <span class="walkman-door-glass"></span>
+                      <span class="walkman-door-hinge"></span>
+                    </div>
+                    <div class="walkman-bay" id="deck-slot">
+                      <p class="deck-empty-label" id="deck-status">Insert tape</p>
+                      <div class="walkman-seat" id="deck-loaded" hidden>
+                        <div class="seat-cassette" aria-hidden="true">
+                          <span class="seat-label" id="deck-tape-title">—</span>
+                          <span class="seat-window">
+                            <span class="deck-spool"></span>
+                            <span class="deck-spool"></span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <aside class="walkman-side" aria-hidden="true">
+                    <span class="walkman-jack"></span>
+                    <span class="walkman-jack-ring"></span>
+                    <span class="walkman-vol"></span>
+                  </aside>
+                </div>
+                <div class="walkman-controls deck-controls">
+                  <button type="button" class="deck-btn walkman-btn" id="deck-play" aria-label="Play" disabled>
+                    <span aria-hidden="true">▶</span>
+                  </button>
+                  <button type="button" class="deck-btn walkman-btn" id="deck-stop" aria-label="Stop" disabled>
+                    <span aria-hidden="true">■</span>
+                  </button>
+                  <button type="button" class="deck-btn walkman-btn" id="deck-eject" aria-label="Eject" disabled>
+                    <span aria-hidden="true">⏏</span>
+                  </button>
+                </div>
+                <div class="deck-vu" aria-hidden="true">
+                  <span></span><span></span><span></span><span></span><span></span>
+                </div>
+              </div>
+            </div>
+            <div class="cassette-rack" id="cassette-rack" aria-label="Cassette library">
+              <button type="button" class="cassette" data-track="dormant" data-title="Tone Reserved" data-side="A">
+                <span class="cass-shell">
+                  <span class="cass-screw s1"></span><span class="cass-screw s2"></span>
+                  <span class="cass-screw s3"></span><span class="cass-screw s4"></span>
+                  <span class="cass-label-plate">
+                    <span class="cass-side">A</span>
+                    <span class="cass-label">01 · Tone Reserved</span>
+                  </span>
+                  <span class="cass-window">
+                    <span class="cass-reel"></span>
+                    <span class="cass-reel"></span>
+                    <span class="cass-bridge"></span>
+                  </span>
+                  <span class="cass-teeth" aria-hidden="true"></span>
+                </span>
+                <span class="cass-spine" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="cassette" data-track="loop" data-title="Loop Pending" data-side="A">
+                <span class="cass-shell cass-tone-loop">
+                  <span class="cass-screw s1"></span><span class="cass-screw s2"></span>
+                  <span class="cass-screw s3"></span><span class="cass-screw s4"></span>
+                  <span class="cass-label-plate">
+                    <span class="cass-side">A</span>
+                    <span class="cass-label">02 · Loop Pending</span>
+                  </span>
+                  <span class="cass-window">
+                    <span class="cass-reel"></span>
+                    <span class="cass-reel"></span>
+                    <span class="cass-bridge"></span>
+                  </span>
+                  <span class="cass-teeth" aria-hidden="true"></span>
+                </span>
+                <span class="cass-spine" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="cassette" data-track="score" data-title="Score Unwritten" data-side="A">
+                <span class="cass-shell cass-tone-score">
+                  <span class="cass-screw s1"></span><span class="cass-screw s2"></span>
+                  <span class="cass-screw s3"></span><span class="cass-screw s4"></span>
+                  <span class="cass-label-plate">
+                    <span class="cass-side">A</span>
+                    <span class="cass-label">03 · Score Unwritten</span>
+                  </span>
+                  <span class="cass-window">
+                    <span class="cass-reel"></span>
+                    <span class="cass-reel"></span>
+                    <span class="cass-bridge"></span>
+                  </span>
+                  <span class="cass-teeth" aria-hidden="true"></span>
+                </span>
+                <span class="cass-spine" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="cassette" data-track="orbit" data-title="Ring Drift" data-side="A">
+                <span class="cass-shell cass-tone-orbit">
+                  <span class="cass-screw s1"></span><span class="cass-screw s2"></span>
+                  <span class="cass-screw s3"></span><span class="cass-screw s4"></span>
+                  <span class="cass-label-plate">
+                    <span class="cass-side">A</span>
+                    <span class="cass-label">04 · Ring Drift</span>
+                  </span>
+                  <span class="cass-window">
+                    <span class="cass-reel"></span>
+                    <span class="cass-reel"></span>
+                    <span class="cass-bridge"></span>
+                  </span>
+                  <span class="cass-teeth" aria-hidden="true"></span>
+                </span>
+                <span class="cass-spine" aria-hidden="true"></span>
+              </button>
+            </div>
+            <div class="flying-tape" id="flying-tape" hidden aria-hidden="true"></div>
+          </div>
+        </section>
+
+        <section id="page-scripts" class="site-page chamber-scripts" data-page="scripts">
+          <div class="chamber-living scripts-living" aria-hidden="true">
+            <div class="planet-flora script-flora">
+              <span class="crater c1"></span>
+              <span class="crater c2"></span>
+              <span class="crater c3"></span>
+            </div>
+            <div class="mercury-dust" aria-hidden="true"></div>
+          </div>
+          <p class="eyebrow">Planetfall · Mercury — Sacred Tablet</p>
+          <h2 class="kinetic-title">
+            <span class="kt-line">Scripts</span>
+            <span class="kt-line accent soft">carved in stone</span>
+          </h2>
+          <p class="lede">
+            An ancient tablet waits under Mercury light. Inscriptions scroll
+            like sacred text — pages still empty of finished form.
+          </p>
+          <div class="tablet-stage" data-chamber="scripts">
+            <div class="ancient-tablet" role="region" aria-label="Script tablet">
+              <div class="tablet-face">
+                <div class="tablet-header">
+                  <span class="tablet-seal">※</span>
+                  <span class="tablet-title">LEX · ZIGZA</span>
+                  <span class="tablet-seal">※</span>
+                </div>
+                <div class="tablet-scroll" id="liturgy-column" tabindex="0">
+                  <p class="tablet-line speak">◇ SIGNAL · awaiting carve</p>
+                  <p class="tablet-line">☰ DRAFT · sealed in dust</p>
+                  <p class="tablet-line">彡 TREATMENT · held in orbit</p>
+                  <p class="tablet-line muted">···· page empty ····</p>
+                  <p class="tablet-line muted">···· word unformed ····</p>
+                  <p class="tablet-line muted">···· glyph reserved ····</p>
+                </div>
+                <div class="tablet-scripts">
+                  <button type="button" class="tablet-inscription" data-script="empty">
+                    <span class="inscribe-mark">✎</span>
+                    <span class="altar-label">Page empty</span>
+                  </button>
+                  <button type="button" class="tablet-inscription" data-script="sealed">
+                    <span class="inscribe-mark">☰</span>
+                    <span class="altar-label">Draft sealed</span>
+                  </button>
+                  <button type="button" class="tablet-inscription" data-script="held">
+                    <span class="inscribe-mark">彡</span>
+                    <span class="altar-label">Treatment held</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="page-photography" class="site-page chamber-photo" data-page="photography">
+          <div class="chamber-living photo-living" aria-hidden="true">
+            <div class="planet-flora photo-flora">
+              <span class="dune d1"></span>
+              <span class="dune d2"></span>
+            </div>
+            <div class="safelight" aria-hidden="true"></div>
+            <div class="flash-overlay" id="photo-flash"></div>
+          </div>
+          <p class="eyebrow">Planetfall · Mars — Darkroom</p>
+          <h2 class="kinetic-title">
+            <span class="kt-line">Photo</span>
+            <span class="kt-line accent soft">developing in red</span>
+          </h2>
+          <p class="lede">
+            Safelight red over chemical trays. Prints hang in the Mars dust-
+            dark — plates unmarked, light reserved for a flash not yet fired.
+          </p>
+          <div class="darkroom" data-chamber="photography">
+            <div class="darkroom-wire" aria-hidden="true"></div>
+            <div class="hanging-prints" id="hanging-prints">
+              <figure class="print-clip" data-hold="0">
+                <div class="print-sheet">
+                  <div class="print-emulsion"></div>
+                  <span class="altar-sigil">◇</span>
+                </div>
+                <figcaption class="altar-label">Plate unmarked</figcaption>
+              </figure>
+              <figure class="print-clip" data-hold="1">
+                <div class="print-sheet">
+                  <div class="print-emulsion"></div>
+                  <span class="altar-sigil">◈</span>
+                </div>
+                <figcaption class="altar-label">Series pending</figcaption>
+              </figure>
+              <figure class="print-clip" data-hold="2">
+                <div class="print-sheet">
+                  <div class="print-emulsion"></div>
+                  <span class="altar-sigil">⬡</span>
+                </div>
+                <figcaption class="altar-label">Light reserved</figcaption>
+              </figure>
+            </div>
+            <div class="chem-trays" aria-hidden="true">
+              <div class="chem-tray" data-bath="dev"><span>DEV</span></div>
+              <div class="chem-tray" data-bath="stop"><span>STOP</span></div>
+              <div class="chem-tray" data-bath="fix"><span>FIX</span></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
