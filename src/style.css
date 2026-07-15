@@ -256,13 +256,41 @@ body {
   color: var(--iris-dim);
 }
 
+.story-end-ui {
+  justify-self: center;
+  align-self: end;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.35rem;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.45s ease, transform 0.45s ease, visibility 0.45s ease;
+  visibility: hidden;
+}
+
+.story-end-ui:not(.is-hidden) {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}
+
+.story-end-ui.is-hidden {
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+
 .journey-ankh {
   justify-self: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.55rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
   pointer-events: auto;
   cursor: pointer;
   background: transparent;
@@ -270,6 +298,34 @@ body {
   padding: 0.25rem;
   animation: hint-breath 2.4s ease-in-out infinite;
   -webkit-tap-highlight-color: transparent;
+}
+
+.rewind-origin {
+  pointer-events: auto;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(200, 220, 255, 0.78);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(140, 180, 255, 0.35);
+  padding: 0.2rem 0.15rem;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.rewind-origin:hover,
+.rewind-origin:focus-visible {
+  color: #e8f0ff;
+  border-color: var(--amber-dim);
+  outline: none;
+}
+
+.rewind-origin:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 4px;
 }
 
 .journey-enter-mark {

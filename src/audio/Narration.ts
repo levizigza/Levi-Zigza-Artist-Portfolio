@@ -8,10 +8,9 @@
  *    reject bright / female / novelty, speak at pitch ~0.5–0.68, rate ~0.7–0.78,
  *    with clause pauses for human drawl cadence.
  *
- * Honesty: browser SpeechSynthesis cannot sound like a real cowboy VA —
- * it will always be somewhat synthetic. Pitch floors vary by engine; some
- * voices clip or chipmunk-reverse below ~0.5. Baked MP3s are the real path
- * to masculine gravel. No ML server is required for visitors.
+ * Line queue: cues enqueue when progress crosses their `at` time; each line
+ * plays to completion (clip `onended` / utterance `onend`) before the next
+ * starts. Never cancels mid-line except Skip / stop / mute.
  */
 
 import { MONOLOGUE, type MonologueCue } from '../content/monologue'
@@ -58,19 +57,28 @@ const COWBOY_PREFERRED: { re: RegExp; weight: number }[] = [
 const FEMALE_HINT =
   /female|woman|zira|samantha|victoria|karen|moira|fiona|tessa|jenny|aria|susan|hazel|linda|sonia|ava|emma/i
 
+/** Breath between finished lines — prioritize cadence over speed. */
+const LINE_GAP_MS = 720
+/** Soft pre-roll before the first syllable of a line. */
+const LINE_LEAD_MS = 380
+
 export class Narration {
   private speaking = false
-  private queueIndex = 0
+  private cueIndex = 0
   private lastProgress = -1
   private voice: SpeechSynthesisVoice | null = null
   private voiceScore = 0
   private textEl: HTMLElement | null
   private cancelled = false
+  /** True only between begin() and stop/reset — blocks dive-progress cue spam. */
+  private sessionActive = false
   private cues: MonologueCue[] = [...MONOLOGUE]
   private loreInjected = false
   private showTimer = 0
   private clearTimer = 0
   private pauseTimer = 0
+  private gapTimer = 0
+  private muteAdvanceTimer = 0
   private activeLine = ''
   private audioCtx: AudioContext | null = null
   private delayReady = false
@@ -83,6 +91,15 @@ export class Narration {
   private clipAudio: HTMLAudioElement | null = null
   /** Clause-queue index while speaking a deep drawl line. */
   private clauseChain = 0
+  /** Lines waiting to play after the current utterance finishes. */
+  private pending: string[] = []
+  /** True while a line (clip / TTS / muted timing) owns the speaker. */
+  private lineActive = false
+  /** All cues have been enqueued and the queue has drained. */
+  private finishedAll = false
+  /** Bumped on stop/reset so async completions can't advance a dead session. */
+  private generation = 0
+  private onCompleteCb: (() => void) | null = null
 
   constructor(textEl?: HTMLElement | null) {
     this.textEl = textEl ?? null
@@ -101,9 +118,17 @@ export class Narration {
       if (window.speechSynthesis) {
         window.speechSynthesis.cancel()
       }
-      this.speaking = false
       window.clearTimeout(this.pauseTimer)
       this.clauseChain = 0
+      // Keep lineActive; mute path advances via estimated timing so the story
+      // still completes every line (subtitles + queue) while silent.
+      if (this.lineActive && this.activeLine) {
+        this.scheduleMutedAdvance(this.activeLine)
+      }
+    } else if (this.lineActive && this.activeLine && !this.clipAudio) {
+      // Was advancing on mute timer — restart audible delivery for this line.
+      window.clearTimeout(this.muteAdvanceTimer)
+      void this.deliverLine(this.activeLine, this.generation)
     }
   }
 
@@ -118,6 +143,21 @@ export class Narration {
 
   setTextTarget(el: HTMLElement | null): void {
     this.textEl = el
+  }
+
+  /** Fires once when every monologue line has finished (or was skipped). */
+  onComplete(cb: (() => void) | null): void {
+    this.onCompleteCb = cb
+  }
+
+  /** True when the full cue list has played through. */
+  hasFinishedAll(): boolean {
+    return this.finishedAll
+  }
+
+  /** True while a line is playing or waiting in the gap before the next. */
+  isBusy(): boolean {
+    return this.lineActive || this.pending.length > 0 || this.gapTimer !== 0
   }
 
   /** Unlock Web Audio for optional quiet delay-echo after gesture. */
@@ -240,10 +280,8 @@ export class Narration {
     this.clipAudio = null
   }
 
-  private playClip(url: string): void {
+  private playClip(url: string, gen: number): void {
     this.stopClip()
-    if (window.speechSynthesis) window.speechSynthesis.cancel()
-    this.clauseChain = 0
 
     const audio = new Audio(url)
     audio.preload = 'auto'
@@ -252,23 +290,26 @@ export class Narration {
     this.speaking = true
 
     audio.onended = () => {
+      if (gen !== this.generation) return
       if (this.clipAudio === audio) this.clipAudio = null
       this.speaking = false
-      this.scheduleClear()
+      this.finishLine(gen)
     }
     audio.onerror = () => {
+      if (gen !== this.generation) return
       if (this.clipAudio === audio) this.clipAudio = null
       this.speaking = false
       this.clipOk.set(url, false)
-      // Corrupt / vanished file — fall back once for this line
-      this.speakCowboy(this.activeLine || '')
+      // Corrupt / vanished file — fall back once for this line (no cancel of peers)
+      this.speakCowboy(this.activeLine || '', gen)
     }
 
     void audio.play().catch(() => {
+      if (gen !== this.generation) return
       if (this.clipAudio === audio) this.clipAudio = null
       this.speaking = false
       this.clipOk.set(url, false)
-      this.speakCowboy(this.activeLine || '')
+      this.speakCowboy(this.activeLine || '', gen)
     })
   }
 
@@ -280,7 +321,13 @@ export class Narration {
     const line = lore.attribution
       ? `Old voice on the wind: “${lore.text}” — ${lore.attribution}.`
       : `Old voice on the wind: “${lore.text}”`
-    this.cues = [this.cues[0], { at: 0.05, text: line }, ...this.cues.slice(1)]
+    // Insert after the first line without rewinding already-spoken cues.
+    const insertAt = Math.min(1, this.cues.length)
+    this.cues = [
+      ...this.cues.slice(0, insertAt),
+      { at: Math.max(0.04, (this.cues[0]?.at ?? 0) + 0.02), text: line },
+      ...this.cues.slice(insertAt),
+    ]
   }
 
   /** Subtitle captions on/off (default on). */
@@ -291,67 +338,129 @@ export class Narration {
     root.classList.toggle('subs-off', !visible)
   }
 
+  /**
+   * Enqueue monologue cues as journey/origin progress crosses their `at`.
+   * Never interrupts a line in progress — overdue cues wait in `pending`.
+   */
   syncToProgress(progress: number): void {
-    if (this.cancelled) return
-    // Origin phase remaps progress downward after dive — restart cue clock.
-    if (this.lastProgress >= 0 && progress + 0.04 < this.lastProgress) {
-      this.queueIndex = 0
-      this.lastProgress = -1
-      this.stopClip()
-      if (window.speechSynthesis) window.speechSynthesis.cancel()
-      this.speaking = false
-      this.clauseChain = 0
-    }
-    for (let i = this.queueIndex; i < this.cues.length; i++) {
-      const cue = this.cues[i]
-      if (progress >= cue.at && this.lastProgress < cue.at) {
-        this.queueIndex = i + 1
-        this.speak(cue.text)
-        break
+    if (this.cancelled || !this.sessionActive) return
+
+    for (let i = this.cueIndex; i < this.cues.length; i++) {
+      const cue = this.cues[i]!
+      if (progress < cue.at) break
+      // Due when we cross `at`, or on catch-up after begin() (lastProgress < at).
+      if (this.lastProgress < cue.at) {
+        this.cueIndex = i + 1
+        this.enqueue(cue.text)
       }
     }
     this.lastProgress = progress
   }
 
-  speak(text: string): void {
+  /** Enqueue a line; starts playback only when the speaker is free. */
+  private enqueue(text: string): void {
+    if (!text || this.cancelled) return
+    this.finishedAll = false
+    this.pending.push(text)
+    this.pump()
+  }
+
+  private pump(): void {
+    if (this.cancelled || this.lineActive || this.gapTimer) return
+    const next = this.pending.shift()
+    if (!next) {
+      this.maybeMarkComplete()
+      return
+    }
+    void this.startLine(next)
+  }
+
+  private async startLine(text: string): Promise<void> {
+    const gen = this.generation
+    this.lineActive = true
     this.show(text)
 
+    window.clearTimeout(this.pauseTimer)
+    this.pauseTimer = window.setTimeout(() => {
+      if (gen !== this.generation || this.cancelled) return
+      void this.deliverLine(text, gen)
+    }, LINE_LEAD_MS)
+  }
+
+  private async deliverLine(text: string, gen: number): Promise<void> {
+    if (gen !== this.generation || this.cancelled) return
+
     if (this.muted) {
-      this.scheduleClear()
+      this.scheduleMutedAdvance(text, gen)
       return
     }
 
-    window.clearTimeout(this.pauseTimer)
-    this.stopClip()
-    if (window.speechSynthesis) window.speechSynthesis.cancel()
-    this.clauseChain = 0
-
-    // Longer prairie beat before deep lines — room to breathe
-    this.pauseTimer = window.setTimeout(() => {
-      if (this.cancelled || this.muted) return
-      void this.speakLine(text)
-    }, 680)
-  }
-
-  private async speakLine(text: string): Promise<void> {
     await this.ensureClipsProbed()
-    if (this.cancelled || this.muted) return
+    if (gen !== this.generation || this.cancelled || this.muted) {
+      if (this.muted && gen === this.generation && !this.cancelled) {
+        this.scheduleMutedAdvance(text, gen)
+      }
+      return
+    }
 
     const url = voClipUrlForText(text)
     if (url && this.clipReady(url)) {
-      this.playClip(url)
+      this.playClip(url, gen)
       return
     }
 
     if (!window.speechSynthesis) {
-      this.scheduleClear()
+      this.scheduleMutedAdvance(text, gen)
       return
     }
 
     if (!this.voice || this.voiceScore < 15) {
       this.pickVoice()
     }
-    this.speakCowboy(text)
+    this.speakCowboy(text, gen)
+  }
+
+  /** Mute / no-engine: keep queue timing so every line is “heard” as captions. */
+  private scheduleMutedAdvance(text: string, gen = this.generation): void {
+    window.clearTimeout(this.muteAdvanceTimer)
+    const ms = this.estimateLineMs(text)
+    this.speaking = false
+    this.muteAdvanceTimer = window.setTimeout(() => {
+      if (gen !== this.generation || this.cancelled) return
+      this.finishLine(gen)
+    }, ms)
+  }
+
+  private estimateLineMs(text: string): number {
+    const words = text.trim().split(/\s+/).filter(Boolean).length
+    const { rate } = this.deliveryParams()
+    // ~165 wpm baseline, slowed by cowboy rate + clause pauses
+    const base = (words / Math.max(0.55, rate * 2.2)) * 1000
+    return Math.max(2200, Math.min(14000, base + 900))
+  }
+
+  private finishLine(gen: number): void {
+    if (gen !== this.generation) return
+    this.speaking = false
+    this.lineActive = false
+    this.clauseChain = 0
+    this.scheduleClear()
+
+    if (this.cancelled) return
+
+    window.clearTimeout(this.gapTimer)
+    this.gapTimer = window.setTimeout(() => {
+      this.gapTimer = 0
+      if (gen !== this.generation || this.cancelled) return
+      this.pump()
+    }, LINE_GAP_MS)
+  }
+
+  private maybeMarkComplete(): void {
+    if (this.finishedAll || this.cancelled) return
+    if (this.cueIndex < this.cues.length || this.pending.length || this.lineActive) return
+    this.finishedAll = true
+    this.onCompleteCb?.()
   }
 
   /**
@@ -369,33 +478,51 @@ export class Narration {
   /** Pitch / rate for deepest usable delivery without broken engines. */
   private deliveryParams(): { pitch: number; rate: number } {
     // Spec allows 0–2; many engines distort below ~0.5 — stay in 0.52–0.68.
-    if (this.voiceScore >= 55) return { pitch: 0.52, rate: 0.7 }
-    if (this.voiceScore >= 40) return { pitch: 0.56, rate: 0.72 }
-    if (this.voiceScore >= 28) return { pitch: 0.6, rate: 0.74 }
-    return { pitch: 0.66, rate: 0.76 }
+    // Slightly slower than before so completeness lands cleanly.
+    if (this.voiceScore >= 55) return { pitch: 0.52, rate: 0.68 }
+    if (this.voiceScore >= 40) return { pitch: 0.56, rate: 0.7 }
+    if (this.voiceScore >= 28) return { pitch: 0.6, rate: 0.72 }
+    return { pitch: 0.66, rate: 0.74 }
   }
 
   /**
    * Cowboy delivery: lowest safe pitch, slow drawl, clause pauses.
+   * Does not call speechSynthesis.cancel — only stop()/mute may cancel.
    */
-  private speakCowboy(text: string): void {
-    if (!text || !window.speechSynthesis || this.muted || this.cancelled) return
+  private speakCowboy(text: string, gen: number): void {
+    if (!text || !window.speechSynthesis || this.cancelled) return
+    if (this.muted) {
+      this.scheduleMutedAdvance(text, gen)
+      return
+    }
 
     const clauses = this.splitClauses(text)
     this.clauseChain = 0
     this.speaking = true
-    this.speakClauseChain(clauses)
+    this.speakClauseChain(clauses, gen)
   }
 
-  private speakClauseChain(clauses: string[]): void {
-    if (this.cancelled || this.muted || !window.speechSynthesis) {
+  private speakClauseChain(clauses: string[], gen: number): void {
+    if (gen !== this.generation || this.cancelled) {
       this.speaking = false
+      return
+    }
+    if (this.muted) {
+      this.speaking = false
+      this.scheduleMutedAdvance(clauses.join(' '), gen)
+      return
+    }
+    if (!window.speechSynthesis) {
+      this.speaking = false
+      this.finishLine(gen)
       return
     }
     if (this.clauseChain >= clauses.length) {
       this.speaking = false
-      this.scheduleClear()
-      this.whisperDelayTail(clauses.join(' '))
+      if (this.pending.length === 0) {
+        this.whisperDelayTail(clauses.join(' '), gen)
+      }
+      this.finishLine(gen)
       return
     }
 
@@ -409,29 +536,39 @@ export class Narration {
     u.volume = 0.96
 
     u.onend = () => {
+      if (gen !== this.generation) return
       this.clauseChain += 1
       // Human breath between clauses — longer after ellipsis / em-dash cadence
-      const gap = /[….]$/.test(chunk.trim()) || /—/.test(chunk) ? 320 : 180
-      window.setTimeout(() => this.speakClauseChain(clauses), gap)
+      const gap = /[….]$/.test(chunk.trim()) || /—/.test(chunk) ? 420 : 240
+      window.setTimeout(() => this.speakClauseChain(clauses, gen), gap)
     }
-    u.onerror = () => {
-      this.speaking = false
-      this.clauseChain = 0
+    u.onerror = (ev) => {
+      if (gen !== this.generation) return
+      // 'interrupted' from our own stop/mute — don't chain further
+      if (ev.error === 'interrupted' || ev.error === 'canceled') {
+        this.speaking = false
+        return
+      }
+      // Skip broken clause; keep the story moving
+      this.clauseChain += 1
+      window.setTimeout(() => this.speakClauseChain(clauses, gen), 160)
     }
     window.speechSynthesis.speak(u)
   }
 
   /**
    * Quiet duplicated path with delay — soft “trail echo” suggestion only.
-   * Skipped when a baked clip played (clip already has room ambience).
+   * Skipped when a baked clip played or another line is already queued.
    */
-  private whisperDelayTail(text: string): void {
+  private whisperDelayTail(text: string, gen: number): void {
     if (!this.delayReady || !window.speechSynthesis || this.cancelled || this.muted) return
+    if (this.pending.length > 0) return
     const words = text.trim().split(/\s+/)
     if (words.length < 4) return
     const tail = words.slice(-4).join(' ')
     window.setTimeout(() => {
-      if (this.cancelled || this.speaking || this.muted) return
+      if (gen !== this.generation || this.cancelled || this.speaking || this.muted) return
+      if (this.pending.length > 0 || this.lineActive) return
       const { pitch, rate } = this.deliveryParams()
       const echo = new SpeechSynthesisUtterance(tail)
       if (this.voice) echo.voice = this.voice
@@ -443,25 +580,35 @@ export class Narration {
     }, 420)
   }
 
+  /** Start (or restart) origin VO from the top of the cue list. */
   begin(): void {
+    this.stopSpeakingOnly()
     this.cancelled = false
-    this.queueIndex = 0
+    this.sessionActive = true
+    this.generation += 1
+    this.cueIndex = 0
     this.lastProgress = -1
     this.activeLine = ''
     this.clauseChain = 0
+    this.pending = []
+    this.lineActive = false
+    this.finishedAll = false
     this.pickVoice()
     void window.speechSynthesis?.getVoices()
     void this.unlockAudio()
     void this.ensureClipsProbed()
     void this.enrichWithLore()
-    this.syncToProgress(0)
   }
 
+  /** Hard stop — Skip intro / leave journey. Cancels mid-line cleanly. */
   stop(): void {
     this.cancelled = true
-    window.clearTimeout(this.showTimer)
-    window.clearTimeout(this.clearTimer)
-    window.clearTimeout(this.pauseTimer)
+    this.sessionActive = false
+    this.generation += 1
+    this.pending = []
+    this.lineActive = false
+    this.finishedAll = true
+    this.clearTimers()
     this.stopClip()
     if (window.speechSynthesis) window.speechSynthesis.cancel()
     this.speaking = false
@@ -472,16 +619,19 @@ export class Narration {
 
   reset(): void {
     this.cancelled = false
-    this.queueIndex = 0
+    this.sessionActive = false
+    this.generation += 1
+    this.cueIndex = 0
     this.lastProgress = -1
     this.cues = [...MONOLOGUE]
     this.loreInjected = false
     this.activeLine = ''
     this.speaking = false
     this.clauseChain = 0
-    window.clearTimeout(this.showTimer)
-    window.clearTimeout(this.clearTimer)
-    window.clearTimeout(this.pauseTimer)
+    this.pending = []
+    this.lineActive = false
+    this.finishedAll = false
+    this.clearTimers()
     this.stopClip()
     if (window.speechSynthesis) window.speechSynthesis.cancel()
     if (this.textEl) {
@@ -491,7 +641,25 @@ export class Narration {
   }
 
   isSpeaking(): boolean {
-    return this.speaking
+    return this.speaking || this.lineActive
+  }
+
+  private stopSpeakingOnly(): void {
+    this.clearTimers()
+    this.stopClip()
+    if (window.speechSynthesis) window.speechSynthesis.cancel()
+    this.speaking = false
+    this.lineActive = false
+    this.clauseChain = 0
+  }
+
+  private clearTimers(): void {
+    window.clearTimeout(this.showTimer)
+    window.clearTimeout(this.clearTimer)
+    window.clearTimeout(this.pauseTimer)
+    window.clearTimeout(this.gapTimer)
+    window.clearTimeout(this.muteAdvanceTimer)
+    this.gapTimer = 0
   }
 
   private show(text: string): void {
@@ -508,7 +676,7 @@ export class Narration {
 
     if (this.activeLine && this.textEl.classList.contains('visible')) {
       this.textEl.classList.remove('visible')
-      this.showTimer = window.setTimeout(reveal, 420)
+      this.showTimer = window.setTimeout(reveal, 360)
     } else {
       reveal()
     }
@@ -517,9 +685,9 @@ export class Narration {
   private scheduleClear(): void {
     window.clearTimeout(this.clearTimer)
     this.clearTimer = window.setTimeout(() => {
-      if (this.speaking || this.cancelled || !this.textEl) return
+      if (this.speaking || this.lineActive || this.cancelled || !this.textEl) return
       this.textEl.classList.remove('visible')
       this.activeLine = ''
-    }, 3200)
+    }, 2800)
   }
 }

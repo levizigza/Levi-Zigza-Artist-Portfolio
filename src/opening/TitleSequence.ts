@@ -27,7 +27,7 @@ export type TitleSequenceCallbacks = {
   onAutoEnter?: () => void
   /** Early/mid boom — eye gate is ready to receive the player. */
   onEyeReady?: () => void
-  /** Dive / origin journey started — show Skip, start story audio. */
+  /** Dive / origin journey started — show Skip, start journey score. */
   onJourneyBegin?: () => void
   /** Site should emerge under the settle veil. */
   onSiteReveal?: () => void
@@ -37,12 +37,21 @@ export type TitleSequenceCallbacks = {
   onAum?: (intensity: number) => void
   /** Bang swell 0–1 for Score. */
   onBang?: (intensity: number) => void
-  /** Origin myth started — reset VO so cues track origin progress. */
+  /** Origin myth started — begin / rewind cowboy VO. */
   onOriginBegin?: () => void
+  /** Last origin frame held — show Enter Site / Rewind (no auto-jump). */
+  onStoryEnd?: () => void
+  /** Left story-end hold (enter site or skip). */
+  onStoryEndDismiss?: () => void
   /** Planet / cosmos flyby whoosh — fire one-shot SFX. */
   onPlanetWhoosh?: (intensity: number) => void
   /** Eye-sun / dream-sun heat crackle presence 0–1. */
   onSunHeat?: (intensity: number) => void
+  /**
+   * While holding the last frame, return true if VO still needs time.
+   * Origin stays on the end hold until false (or user Enter / Rewind / Skip).
+   */
+  shouldHoldForNarration?: () => boolean
 }
 
 type Phase =
@@ -51,6 +60,7 @@ type Phase =
   | 'eye'
   | 'dive'
   | 'origin'
+  | 'storyEnd'
   | 'settle'
   | 'journey'
   | 'done'
@@ -73,8 +83,10 @@ const DIVE_EYE_END = 0.28
 /** Hyperspace fully opaque by this dive fraction. */
 const DIVE_WARP_FULL = 0.22
 /** Full origin myth (sleeper → dream cosmos → civs → boy/alchemist parable). */
-/** Stretched for deep cowboy VO cadence (~3–5s per line). */
-const ORIGIN_SEC = 52
+/** Stretched for deep cowboy VO cadence (~4–6s per line + gaps). */
+const ORIGIN_SEC = 80
+/** Hold readable last parable frame (before origin’s end fade-to-black). */
+const STORY_HOLD_LOCAL = 0.9
 const SETTLE_SEC = 1.15
 
 function smoothstep(a: number, b: number, t: number): number {
@@ -292,7 +304,17 @@ export class TitleSequence {
 
   /** True during dive or origin — Enter skip is allowed once armed. */
   isJourneyStory(): boolean {
-    return this.phase === 'dive' || this.phase === 'origin' || this.phase === 'settle'
+    return (
+      this.phase === 'dive' ||
+      this.phase === 'origin' ||
+      this.phase === 'storyEnd' ||
+      this.phase === 'settle'
+    )
+  }
+
+  /** Last origin frame held — awaiting Enter Site or Rewind. */
+  isStoryEnd(): boolean {
+    return this.phase === 'storyEnd'
   }
 
   hasReachedRoad(): boolean {
@@ -328,14 +350,18 @@ export class TitleSequence {
     return { cx: p.cx, cy: p.cy, size: Math.max(36, p.baseR * 2.8) }
   }
 
-  /** Skip dive / origin and settle into the site. */
+  /** Skip dive / origin / end-hold and settle into the site. */
   skipIntro(): void {
     if (
       this.phase !== 'dive' &&
       this.phase !== 'origin' &&
+      this.phase !== 'storyEnd' &&
       this.phase !== 'settle'
     ) {
       return
+    }
+    if (this.phase === 'storyEnd') {
+      this.callbacks.onStoryEndDismiss?.()
     }
     this.phase = 'settle'
     this.phaseT = 0
@@ -347,6 +373,46 @@ export class TitleSequence {
   /** @deprecated use skipIntro */
   skipMyth(): void {
     this.skipIntro()
+  }
+
+  /** Enter site from the last-frame hold (same settle path as Skip). */
+  confirmEnterSite(): void {
+    if (this.phase !== 'storyEnd' && this.phase !== 'origin') return
+    this.callbacks.onStoryEndDismiss?.()
+    this.phase = 'settle'
+    this.phaseT = 0
+    this.emitAum(0)
+    this.emitBang(0)
+    this.maybeRevealSite()
+  }
+
+  /** Restart origin myth + VO from the beginning (hyperspace optional / skipped). */
+  rewindOrigin(): void {
+    if (
+      this.phase !== 'storyEnd' &&
+      this.phase !== 'origin' &&
+      this.phase !== 'settle'
+    ) {
+      return
+    }
+    if (this.phase === 'storyEnd') {
+      this.callbacks.onStoryEndDismiss?.()
+    }
+    this.idle = false
+    this.playing = true
+    this.phase = 'origin'
+    this.phaseT = 0
+    this.progress = 0
+    this.siteRevealed = false
+    this.arrivalComplete = false
+    this.canvasFade = 1
+    this.origin.reset()
+    this.lastTs = 0
+    this.lastLabel = ''
+    this.emitAum(0)
+    this.callbacks.onOriginBegin?.()
+    this.callbacks.onProgress?.(0.02, 'sleeper')
+    this.ensureLoop()
   }
 
   dispose(): void {
@@ -516,7 +582,7 @@ export class TitleSequence {
     const gradeIdle = this.phase === 'potentiality' || this.phase === 'eye' || this.phase === 'bang'
     this.crt.setGrade(eyeCrtGrade(this.progress, gradeIdle))
     // Arcade only for origin myth — dive keeps cinematic warp present
-    this.crt.setArcade(this.phase === 'origin')
+    this.crt.setArcade(this.phase === 'origin' || this.phase === 'storyEnd')
     const ctx = this.crt.beginFrame(dt)
     const w = this.crt.width
     const h = this.crt.height
@@ -617,17 +683,22 @@ export class TitleSequence {
         ctx.restore()
       }
       this.syncIntroSfx('dive', 0, Math.max(zoomEase, warpT))
-    } else if (this.phase === 'origin') {
-      const localT = Math.min(1, this.phaseT / this.originDuration)
-      const absProgress = localT * ORIGIN.bloomEnd
+    } else if (this.phase === 'origin' || this.phase === 'storyEnd') {
+      const localT =
+        this.phase === 'storyEnd'
+          ? STORY_HOLD_LOCAL
+          : Math.min(STORY_HOLD_LOCAL, this.phaseT / this.originDuration)
+      // Draw at held frame; cue clock may already be at bloomEnd during storyEnd.
+      const absProgress =
+        this.phase === 'storyEnd' ? ORIGIN.bloomEnd : localT * ORIGIN.bloomEnd
       this.progress = absProgress
 
       ctx.fillStyle = '#000102'
       ctx.fillRect(0, 0, w, h)
 
-      const fadeOut = Math.min(1, 1 - Math.max(0, (localT - 0.92) / 0.08))
+      // Keep the parable readable on the end hold (skip fade-to-black).
       ctx.save()
-      ctx.globalAlpha = fadeOut
+      ctx.globalAlpha = 1
       this.origin.draw(ctx, {
         t: localT,
         time,
@@ -636,7 +707,7 @@ export class TitleSequence {
         alpha: 1,
       })
       ctx.restore()
-      this.emitAum(this.origin.aumIntensity(absProgress))
+      this.emitAum(this.origin.aumIntensity(localT * ORIGIN.bloomEnd))
       this.syncIntroSfx('origin', localT)
     } else if (this.phase === 'settle') {
       const u = Math.min(1, this.phaseT / this.settleDuration)
@@ -683,7 +754,7 @@ export class TitleSequence {
     if (this.flash > 0 || this.enterPulse > 0) {
       const a = Math.max(this.flash / 1.1, this.enterPulse) * 0.85
       // Soft flash only at dive onset; origin stays cream arcade flash
-      if (this.phase === 'origin') {
+      if (this.phase === 'origin' || this.phase === 'storyEnd') {
         ctx.fillStyle = a > 0.55 ? '#f4f4f0' : '#e8e0c8'
         ctx.globalAlpha = a * 0.35
         ctx.fillRect(0, 0, w, h)
@@ -736,7 +807,8 @@ export class TitleSequence {
     }
 
     if (this.phase === 'origin') {
-      const u = Math.min(1, this.phaseT / this.originDuration)
+      const holdAt = this.originDuration * STORY_HOLD_LOCAL
+      const u = Math.min(STORY_HOLD_LOCAL, this.phaseT / this.originDuration)
       this.progress = u * ORIGIN.bloomEnd
       const label = labelForProgress(Math.max(0.08, this.progress))
       if (label !== this.lastLabel) {
@@ -745,12 +817,24 @@ export class TitleSequence {
       } else {
         this.callbacks.onProgress?.(this.progress, label)
       }
-      if (this.phaseT >= this.originDuration) {
-        this.phase = 'settle'
-        this.phaseT = 0
+      // Reach last readable frame → hold (never auto-settle to site).
+      if (this.phaseT >= holdAt) {
+        this.phaseT = holdAt
+        this.phase = 'storyEnd'
         this.emitAum(0)
-        this.callbacks.onProgress?.(ORIGIN.bloomEnd + 0.01, 'settle')
+        this.callbacks.onProgress?.(ORIGIN.bloomEnd, 'end')
+        this.callbacks.onStoryEnd?.()
       }
+      return
+    }
+
+    if (this.phase === 'storyEnd') {
+      // Visual hold uses STORY_HOLD_LOCAL; report bloomEnd so trailing VO cues enqueue.
+      this.phaseT = this.originDuration * STORY_HOLD_LOCAL
+      this.progress = ORIGIN.bloomEnd
+      this.callbacks.onProgress?.(this.progress, 'end')
+      // Stay until Enter Site / Rewind / Skip — VO may still drain.
+      void this.callbacks.shouldHoldForNarration?.()
       return
     }
 

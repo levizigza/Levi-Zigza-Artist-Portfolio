@@ -18,7 +18,9 @@ const veil = document.querySelector<HTMLElement>('#transition-veil')!
 const progressFill = document.querySelector<HTMLElement>('#progress-fill')!
 const progressLabel = document.querySelector<HTMLElement>('#progress-label')!
 const monologueText = document.querySelector<HTMLElement>('#monologue-text')!
+const storyEndUi = document.querySelector<HTMLElement>('#story-end-ui')!
 const enterSiteBtn = document.querySelector<HTMLButtonElement>('#journey-ankh')!
+const rewindOriginBtn = document.querySelector<HTMLButtonElement>('#rewind-origin')!
 const subsToggle = document.querySelector<HTMLButtonElement>('#subs-toggle')!
 const skipIntro = document.querySelector<HTMLButtonElement>('#skip-intro')!
 const muteToggle = document.querySelector<HTMLButtonElement>('#mute-toggle')!
@@ -82,14 +84,27 @@ const sequence = new TitleSequence(canvas, {
   },
   onJourneyBegin() {
     showSkipIntro(true)
+    hideStoryEndUi()
     journeyUI.classList.remove('hidden')
     journeyUI.setAttribute('aria-hidden', 'false')
     void ensureJourneyAudio()
   },
   onOriginBegin() {
-    // Dive remaps progress high; origin restarts 0→bloomEnd — resync cowboy VO.
+    // VO starts with the origin myth only (not during hyperspace dive).
+    hideStoryEndUi()
     narration.reset()
+    narration.begin()
     if (journeyAudioStarted) narration.syncToProgress(0)
+  },
+  onStoryEnd() {
+    showSkipIntro(false)
+    showStoryEndUi()
+  },
+  onStoryEndDismiss() {
+    hideStoryEndUi()
+  },
+  shouldHoldForNarration() {
+    return narration.isBusy() || !narration.hasFinishedAll()
   },
   onPlanetWhoosh(intensity) {
     score.playPlanetWhoosh(intensity)
@@ -110,6 +125,22 @@ function showSkipIntro(visible: boolean): void {
   skipIntro.classList.toggle('is-hidden', !visible)
   skipIntro.setAttribute('aria-hidden', visible ? 'false' : 'true')
   skipIntro.tabIndex = visible ? 0 : -1
+}
+
+function showStoryEndUi(): void {
+  if (!storyEndUi) return
+  storyEndUi.classList.remove('is-hidden')
+  storyEndUi.setAttribute('aria-hidden', 'false')
+  if (enterSiteBtn) enterSiteBtn.tabIndex = 0
+  if (rewindOriginBtn) rewindOriginBtn.tabIndex = 0
+}
+
+function hideStoryEndUi(): void {
+  if (!storyEndUi) return
+  storyEndUi.classList.add('is-hidden')
+  storyEndUi.setAttribute('aria-hidden', 'true')
+  if (enterSiteBtn) enterSiteBtn.tabIndex = -1
+  if (rewindOriginBtn) rewindOriginBtn.tabIndex = -1
 }
 
 const site = new SiteApp(
@@ -196,7 +227,8 @@ async function ensureJourneyAudio(): Promise<void> {
     if (journeyAudioStarted) return
     journeyAudioStarted = true
     await score.start()
-    narration.begin()
+    // Cowboy VO begins on origin (onOriginBegin) — not mid-dive.
+    void narration.unlockAudio()
   } catch {
     journeyAudioStarted = false
   }
@@ -275,6 +307,7 @@ function revealSite(): void {
 function settleIntoSite(): void {
   mode = 'site'
   showSkipIntro(false)
+  hideStoryEndUi()
   journeyUI.classList.add('hidden')
   journeyUI.setAttribute('aria-hidden', 'true')
   sequence.setActive(false)
@@ -285,8 +318,19 @@ function settleIntoSite(): void {
 
 function skipJourneyToSite(): void {
   if (mode !== 'journey') return
+  hideStoryEndUi()
+  narration.stop()
   sequence.skipIntro()
   if (!siteShown) revealSite()
+}
+
+function rewindOriginStory(): void {
+  if (mode !== 'journey' || transitioning) return
+  if (!sequence.isStoryEnd() && !sequence.isJourneyStory()) return
+  hideStoryEndUi()
+  showSkipIntro(true)
+  sequence.rewindOrigin()
+  // onOriginBegin resets + begins VO; keep journey score running.
 }
 
 function returnToJourney(): void {
@@ -316,7 +360,13 @@ function enterSiteFromJourney(): void {
   if (mode !== 'journey' || transitioning) return
   transitioning = true
   showSkipIntro(false)
+  hideStoryEndUi()
   narration.stop()
+  if (sequence.isStoryEnd()) {
+    sequence.confirmEnterSite()
+  } else if (sequence.isJourneyStory()) {
+    sequence.skipIntro()
+  }
   void score.fadeToUnderscore(1.4)
   sequence.flashEnter(1.1)
   veil.classList.add('active')
@@ -339,6 +389,11 @@ function onEnterActivate(): void {
   if (mode === 'potentiality') void beginBoom()
   else if (mode === 'eye') void beginJourney()
   else if (mode === 'journey') {
+    // Last origin frame — Enter enters the site (does not skip mid-story).
+    if (sequence.isStoryEnd()) {
+      enterSiteFromJourney()
+      return
+    }
     // Cosmic return path — Enter enters the site
     if (sequence.hasReachedRoad()) {
       enterSiteFromJourney()
@@ -367,20 +422,32 @@ enterBtn.addEventListener('pointerenter', () => sequence.setHover(true))
 enterBtn.addEventListener('pointerleave', () => sequence.setHover(false))
 
 enterSiteBtn?.addEventListener('click', () => {
-  if (mode === 'journey') enterSiteFromJourney()
+  if (mode === 'journey' && sequence.isStoryEnd()) enterSiteFromJourney()
 })
 enterSiteBtn?.addEventListener(
   'touchend',
   (e) => {
     e.preventDefault()
-    if (mode === 'journey') enterSiteFromJourney()
+    if (mode === 'journey' && sequence.isStoryEnd()) enterSiteFromJourney()
+  },
+  { passive: false },
+)
+
+rewindOriginBtn?.addEventListener('click', () => {
+  if (mode === 'journey') rewindOriginStory()
+})
+rewindOriginBtn?.addEventListener(
+  'touchend',
+  (e) => {
+    e.preventDefault()
+    if (mode === 'journey') rewindOriginStory()
   },
   { passive: false },
 )
 
 skipIntro?.addEventListener('click', () => {
   if (mode === 'journey') {
-    if (sequence.hasReachedRoad()) {
+    if (sequence.isStoryEnd() || sequence.hasReachedRoad()) {
       enterSiteFromJourney()
     } else {
       diveSkipArmed = true

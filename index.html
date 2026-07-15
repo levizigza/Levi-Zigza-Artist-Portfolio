@@ -92,15 +92,27 @@
           <p id="monologue-text" class="monologue-text"></p>
         </div>
 
-        <button
-          type="button"
-          id="journey-ankh"
-          class="journey-ankh"
-          aria-label="Enter the site"
-        >
-          <span class="journey-enter-mark" aria-hidden="true"></span>
-          <span class="hint-text">press ENTER</span>
-        </button>
+        <div id="story-end-ui" class="story-end-ui is-hidden" aria-hidden="true">
+          <button
+            type="button"
+            id="journey-ankh"
+            class="journey-ankh"
+            aria-label="Enter the site"
+            tabindex="-1"
+          >
+            <span class="journey-enter-mark" aria-hidden="true"></span>
+            <span class="hint-text">Enter Site · press ENTER</span>
+          </button>
+          <button
+            type="button"
+            id="rewind-origin"
+            class="rewind-origin"
+            aria-label="Rewind origin story"
+            tabindex="-1"
+          >
+            Rewind
+          </button>
+        </div>
 
         <div class="journey-progress">
           <div class="progress-track">
