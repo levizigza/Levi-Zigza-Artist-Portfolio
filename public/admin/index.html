@@ -4,21 +4,53 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Levi Zigza Admin</title>
+    <script>
+      // Ensure trailing slash so ./admin.css and ./admin.js resolve under Vite base
+      // (/Levi-Zigza-Artist-Portfolio/admin/) and Express (/admin/).
+      ;(function () {
+        var path = location.pathname
+        if (path.endsWith('/index.html')) return
+        if (!path.endsWith('/')) {
+          location.replace(path + '/' + location.search + location.hash)
+        }
+      })()
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/admin/admin.css" />
+    <!-- Relative paths: works with GitHub Pages base + local Vite/Express -->
+    <link rel="stylesheet" href="./admin.css" />
   </head>
   <body>
     <div class="admin-shell">
       <header class="admin-header">
-        <a class="admin-brand" href="/">LEVI ZIGZA</a>
+        <a class="admin-brand" href="../">LEVI ZIGZA</a>
         <span class="admin-badge">Admin</span>
         <button type="button" id="logout-btn" class="ghost-btn" hidden>Log out</button>
       </header>
+
+      <section id="offline-panel" class="panel" hidden>
+        <h1>Admin is local-only</h1>
+        <p class="hint">
+          GitHub Pages is static — there is no upload API here. Run the portfolio
+          locally to sign in and manage chamber media.
+        </p>
+        <ol class="offline-steps">
+          <li>Clone the repo and copy <code>.env.example</code> → <code>.env</code> (set <code>ADMIN_PASSWORD</code>).</li>
+          <li>Run <code>npm install</code> then <code>npm run dev</code> (Vite + Express).</li>
+          <li>
+            Open
+            <code>http://localhost:5173/Levi-Zigza-Artist-Portfolio/admin/</code>
+          </li>
+        </ol>
+        <p class="hint">
+          Vite proxies <code>/api</code> to the Express host on port
+          <code>5174</code>.
+        </p>
+      </section>
 
       <section id="login-panel" class="panel">
         <h1>Chamber upload</h1>
@@ -67,6 +99,6 @@
         <div id="manifest-list" class="manifest-list"></div>
       </section>
     </div>
-    <script type="module" src="/admin/admin.js"></script>
+    <script type="module" src="./admin.js"></script>
   </body>
 </html>

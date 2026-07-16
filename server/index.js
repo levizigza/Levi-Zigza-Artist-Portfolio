@@ -300,7 +300,11 @@ async function main() {
   app.use(express.static(distDir))
   app.use(express.static(publicDir))
 
+  // Trailing slash so relative ./admin.css + ./admin.js resolve correctly
   app.get('/admin', (_req, res) => {
+    res.redirect(301, '/admin/')
+  })
+  app.get('/admin/', (_req, res) => {
     res.sendFile(path.join(publicDir, 'admin', 'index.html'))
   })
 

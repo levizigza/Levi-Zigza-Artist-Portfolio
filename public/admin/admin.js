@@ -1,3 +1,4 @@
+const offlinePanel = document.getElementById('offline-panel')
 const loginPanel = document.getElementById('login-panel')
 const uploadPanel = document.getElementById('upload-panel')
 const logoutBtn = document.getElementById('logout-btn')
@@ -21,7 +22,15 @@ async function api(path, options = {}) {
   return data
 }
 
+function setOffline(on) {
+  if (offlinePanel) offlinePanel.hidden = !on
+  if (loginPanel) loginPanel.hidden = on
+  if (uploadPanel) uploadPanel.hidden = true
+  if (logoutBtn) logoutBtn.hidden = true
+}
+
 function setAuthed(on) {
+  if (offlinePanel) offlinePanel.hidden = true
   loginPanel.hidden = on
   uploadPanel.hidden = !on
   logoutBtn.hidden = !on
@@ -128,7 +137,25 @@ manifestList?.addEventListener('click', async (e) => {
   }
 })
 
+/** True when Express API is reachable (local `npm run dev` / `npm start`). */
+async function apiReachable() {
+  try {
+    const res = await fetch('/api/health', { credentials: 'include' })
+    if (!res.ok) return false
+    const data = await res.json().catch(() => null)
+    return Boolean(data && data.ok !== false)
+  } catch {
+    return false
+  }
+}
+
 async function boot() {
+  const online = await apiReachable()
+  if (!online) {
+    setOffline(true)
+    return
+  }
+
   try {
     const session = await api('/api/session')
     setAuthed(Boolean(session.authenticated))

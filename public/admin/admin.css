@@ -100,10 +100,23 @@ body {
 }
 
 .hint code,
-.limits code {
+.limits code,
+.offline-steps code {
   font-family: var(--font-mono);
   font-size: 0.85em;
   color: var(--accent);
+}
+
+.offline-steps {
+  margin: 0 0 1.25rem;
+  padding-left: 1.25rem;
+  color: var(--muted);
+  line-height: 1.55;
+  font-size: 0.95rem;
+}
+
+.offline-steps li + li {
+  margin-top: 0.55rem;
 }
 
 .stack {
