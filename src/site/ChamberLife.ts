@@ -217,6 +217,9 @@ export class ChamberLife {
         this.drawMarsDust(ctx, w, h, t, beat, dt)
         this.drawChamberCraft(ctx, w, h, t, beat, 'photo')
         break
+      case 'technovate':
+        this.drawNeptuneLattice(ctx, w, h, t, beat)
+        break
     }
   }
 
@@ -738,6 +741,59 @@ export class ChamberLife {
       g.addColorStop(1, 'transparent')
       ctx.fillStyle = g
       ctx.fillRect(x - 18, top, 36, height)
+    }
+  }
+
+  /** Web / Neptune — soft orbital lattice + signal nodes */
+  private drawNeptuneLattice(
+    ctx: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    t: number,
+    beat: number,
+  ): void {
+    const cx = w * 0.72
+    const cy = h * 0.36
+    const planetR = Math.min(70, w * 0.1)
+
+    const disc = ctx.createRadialGradient(cx, cy, 0, cx, cy, planetR * 1.8)
+    disc.addColorStop(0, `rgba(90, 170, 220, ${0.28 + beat * 0.12})`)
+    disc.addColorStop(0.55, 'rgba(40, 90, 140, 0.16)')
+    disc.addColorStop(1, 'transparent')
+    ctx.fillStyle = disc
+    ctx.beginPath()
+    ctx.arc(cx, cy, planetR * 1.8, 0, Math.PI * 2)
+    ctx.fill()
+
+    ctx.fillStyle = 'rgba(50, 110, 160, 0.42)'
+    ctx.beginPath()
+    ctx.arc(cx, cy, planetR, 0, Math.PI * 2)
+    ctx.fill()
+
+    for (let i = 0; i < 4; i++) {
+      const rx = planetR * (1.35 + i * 0.35)
+      const ry = planetR * (0.35 + i * 0.08)
+      ctx.beginPath()
+      ctx.ellipse(cx, cy, rx, ry, 0.35 + i * 0.08, 0, Math.PI * 2)
+      ctx.strokeStyle = `rgba(140, 210, 240, ${0.08 + (1 - i / 4) * 0.1 + beat * 0.05})`
+      ctx.lineWidth = 1.2
+      ctx.stroke()
+    }
+
+    for (let i = 0; i < 9; i++) {
+      const ang = t * 0.55 + (i / 9) * Math.PI * 2
+      const rad = planetR * (1.5 + (i % 3) * 0.35)
+      const x = cx + Math.cos(ang) * rad
+      const y = cy + Math.sin(ang) * rad * 0.55
+      ctx.fillStyle = `rgba(180, 230, 255, ${0.35 + beat * 0.35})`
+      ctx.beginPath()
+      ctx.arc(x, y, 2.2 + beat * 1.5, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.strokeStyle = `rgba(120, 200, 230, ${0.12 + beat * 0.08})`
+      ctx.beginPath()
+      ctx.moveTo(cx, cy)
+      ctx.lineTo(x, y)
+      ctx.stroke()
     }
   }
 

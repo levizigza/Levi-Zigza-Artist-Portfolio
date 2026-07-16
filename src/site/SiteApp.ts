@@ -26,7 +26,10 @@ const PLANET_SIGNAL: Record<string, string> = {
   music: 'SATURN · WALKMAN',
   scripts: 'MERCURY · TABLET',
   photography: 'MARS · DARKROOM',
+  technovate: 'NEPTUNE · TECHNOVATE',
 }
+
+const PAGE_IDS = new Set(Object.keys(PLANET_SIGNAL))
 
 export class SiteApp {
   private root: HTMLElement
@@ -74,8 +77,21 @@ export class SiteApp {
     const ret = document.getElementById('return-journey')
     ret?.addEventListener('click', () => this.handlers.onReturnJourney())
 
+    window.addEventListener('hashchange', () => {
+      const fromHash = this.pageFromHash()
+      if (fromHash && fromHash !== this.currentPage) this.showPage(fromHash)
+    })
+
     void this.loadOptionalLore()
     void this.loadChamberMedia()
+  }
+
+  /** Deep-link support for `#technovate`, `#music`, etc. */
+  private pageFromHash(): string | null {
+    const raw = (location.hash || '').replace(/^#/, '').trim().toLowerCase()
+    if (!raw) return null
+    if (raw === 'web' || raw === 'sites') return 'technovate'
+    return PAGE_IDS.has(raw) ? raw : null
   }
 
   private async loadChamberMedia(): Promise<void> {
@@ -93,8 +109,13 @@ export class SiteApp {
     this.root.setAttribute('aria-hidden', 'false')
     requestAnimationFrame(() => this.root.classList.add('visible'))
     this.life.start()
-    this.life.setPage(this.currentPage)
-    this.updateSignal(this.currentPage)
+    const fromHash = this.pageFromHash()
+    if (fromHash && fromHash !== this.currentPage) {
+      this.applyPage(fromHash, false)
+    } else {
+      this.life.setPage(this.currentPage)
+      this.updateSignal(this.currentPage)
+    }
   }
 
   hide(): void {
@@ -183,6 +204,10 @@ export class SiteApp {
     this.life.setPage(id)
     this.updateSignal(id)
     this.handlers.onChamberChange?.(id)
+    const nextHash = `#${id}`
+    if (location.hash !== nextHash) {
+      history.replaceState(null, '', nextHash)
+    }
     this.root.scrollTo({ top: 0, behavior: this.reducedMotion ? 'auto' : 'smooth' })
   }
 

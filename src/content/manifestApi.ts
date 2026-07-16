@@ -1,6 +1,11 @@
 /**
  * Portfolio media manifest — loaded from the admin API / uploads.
  * Fails soft when the API is offline so placeholders stay.
+ *
+ * Resolve order (GitHub Pages friendly):
+ * 1. `/api/manifest` (Express / Worker / local Vite proxy)
+ * 2. Supabase public `portfolio/manifest.json` (when VITE_SUPABASE_URL is set)
+ * 3. Static `public/uploads/manifest.json` committed with the site
  */
 
 import { withBase } from './withBase'
@@ -34,14 +39,31 @@ function parseManifest(data: unknown): Manifest | null {
   return { items: items.map(normalizeItem) }
 }
 
-async function fetchStaticManifest(): Promise<Manifest> {
+function supabaseManifestUrl(): string | null {
+  const base = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.replace(/\/$/, '')
+  if (!base) return null
+  const bucket = (import.meta.env.VITE_SUPABASE_BUCKET as string | undefined) || 'portfolio'
+  return `${base}/storage/v1/object/public/${bucket}/manifest.json`
+}
+
+async function fetchJsonManifest(url: string): Promise<Manifest | null> {
   try {
-    const res = await fetch(withBase('/uploads/manifest.json'), { cache: 'no-store' })
-    if (!res.ok) return EMPTY
-    return parseManifest(await res.json()) ?? EMPTY
+    const res = await fetch(url, { cache: 'no-store' })
+    if (!res.ok) return null
+    return parseManifest(await res.json())
   } catch {
-    return EMPTY
+    return null
   }
+}
+
+async function fetchStaticManifest(): Promise<Manifest> {
+  return (await fetchJsonManifest(withBase('/uploads/manifest.json'))) ?? EMPTY
+}
+
+async function fetchSupabaseManifest(): Promise<Manifest | null> {
+  const url = supabaseManifestUrl()
+  if (!url) return null
+  return fetchJsonManifest(url)
 }
 
 export async function fetchManifest(timeoutMs = 4000): Promise<Manifest> {
@@ -59,8 +81,12 @@ export async function fetchManifest(timeoutMs = 4000): Promise<Manifest> {
       if (parsed) return parsed
     }
   } catch {
-    // API offline / timeout — try static file below
+    // API offline / timeout — try cloud / static below
   }
+
+  const fromCloud = await fetchSupabaseManifest()
+  if (fromCloud) return fromCloud
+
   // GitHub Pages & static hosts: committed public/uploads/manifest.json
   return fetchStaticManifest()
 }

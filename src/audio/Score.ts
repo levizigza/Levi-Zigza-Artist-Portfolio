@@ -1569,6 +1569,7 @@ export class Score {
       music: 780,
       scripts: 480,
       photography: 620,
+      technovate: 720,
     }
     const timpaniByPage: Record<string, number> = {
       home: 0.016,
@@ -1576,6 +1577,7 @@ export class Score {
       music: 0.022,
       scripts: 0.012,
       photography: 0.015,
+      technovate: 0.018,
     }
     const hushByPage: Record<string, number> = {
       home: 0.007,
@@ -1583,6 +1585,7 @@ export class Score {
       music: 0.005,
       scripts: 0.009,
       photography: 0.01,
+      technovate: 0.006,
     }
     const stringMul: Record<string, number> = {
       home: 1,
@@ -1590,6 +1593,7 @@ export class Score {
       music: 1.15,
       scripts: 0.9,
       photography: 1.05,
+      technovate: 1.1,
     }
     const fq = filterByPage[page] ?? 560
     for (const f of this.filterTargets) {

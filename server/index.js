@@ -22,6 +22,11 @@ import {
   removeManifestItem,
   resolveUploadPath,
 } from './manifest.js'
+import {
+  deleteFromSupabase,
+  isSupabaseConfigured,
+  uploadToSupabase,
+} from './supabaseStorage.js'
 
 const PORT = Number(process.env.PORT || 5174)
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || ''
@@ -241,16 +246,29 @@ async function main() {
         const id = crypto.randomUUID()
         const safe = sanitizeBaseName(path.parse(file.originalname).name)
         const filename = `${id.slice(0, 8)}-${safe}${ext}`
-        const absDir = path.join(UPLOADS_DIR, rules.folder)
-        await fs.mkdir(absDir, { recursive: true })
-        const absPath = path.join(absDir, filename)
-        await fs.writeFile(absPath, file.buffer)
+
+        let publicPath = `/uploads/${rules.folder}/${filename}`
+        const cloudUrl = await uploadToSupabase({
+          folder: rules.folder,
+          filename,
+          buffer: file.buffer,
+          contentType: file.mimetype || undefined,
+        })
+
+        if (cloudUrl) {
+          publicPath = cloudUrl
+        } else {
+          const absDir = path.join(UPLOADS_DIR, rules.folder)
+          await fs.mkdir(absDir, { recursive: true })
+          const absPath = path.join(absDir, filename)
+          await fs.writeFile(absPath, file.buffer)
+        }
 
         const item = {
           id,
           type,
           title,
-          path: `/uploads/${rules.folder}/${filename}`,
+          path: publicPath,
           mime: file.mimetype || undefined,
           createdAt: new Date().toISOString(),
           originalName: file.originalname,
@@ -283,6 +301,8 @@ async function main() {
         } catch {
           /* file may already be gone */
         }
+      } else if (/^https?:\/\//i.test(removed.path)) {
+        await deleteFromSupabase(removed.path)
       }
       res.json({ ok: true, removed, manifest })
     } catch (err) {
@@ -362,6 +382,11 @@ async function main() {
     console.log(`Levi Zigza API listening on http://localhost:${PORT}`)
     if (!ADMIN_PASSWORD) {
       console.warn('WARNING: ADMIN_PASSWORD is unset — login will return 503.')
+    }
+    if (isSupabaseConfigured()) {
+      console.log('Supabase Storage: enabled (portfolio bucket)')
+    } else {
+      console.log('Supabase Storage: off — using local public/uploads/')
     }
   })
 }

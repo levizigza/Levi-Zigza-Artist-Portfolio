@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { syncManifestToSupabase } from './supabaseStorage.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const ROOT = path.resolve(__dirname, '..')
@@ -56,6 +57,12 @@ export async function readManifest() {
 export async function writeManifest(manifest) {
   const payload = `${JSON.stringify({ items: manifest.items }, null, 2)}\n`
   await fs.writeFile(MANIFEST_PATH, payload, 'utf8')
+  // Best-effort cloud mirror for GitHub Pages / Workers
+  try {
+    await syncManifestToSupabase(manifest)
+  } catch (err) {
+    console.warn('[manifest] supabase sync skipped:', err?.message || err)
+  }
 }
 
 /**
@@ -84,11 +91,13 @@ export async function removeManifestItem(id) {
 
 /**
  * Resolve a public `/uploads/...` path to an absolute file path under uploads.
+ * Cloud https URLs return null (handled by Supabase delete).
  * @param {string} publicPath
  * @returns {string | null}
  */
 export function resolveUploadPath(publicPath) {
   if (!publicPath || typeof publicPath !== 'string') return null
+  if (/^https?:\/\//i.test(publicPath)) return null
   const normalized = publicPath.replace(/\\/g, '/')
   if (!normalized.startsWith('/uploads/')) return null
   const rel = normalized.slice('/uploads/'.length)

@@ -73,7 +73,11 @@ npm run vo:manifest
 
 ## Admin login & media uploads
 
-Chambers load media from a JSON manifest (`public/uploads/manifest.json`) via `/api/manifest`.
+Chambers load media from a JSON manifest via this resolve order:
+
+1. `GET /api/manifest` (Express in local/dev, or optional Cloudflare Worker)
+2. Supabase public object `portfolio/manifest.json` (when `VITE_SUPABASE_URL` is set)
+3. Static `public/uploads/manifest.json` shipped with the build
 
 **Works now (local):**
 
@@ -86,7 +90,50 @@ Chambers load media from a JSON manifest (`public/uploads/manifest.json`) via `/
 
 Bare `http://localhost:5173/admin/` redirects to the base-path URL above. Vite proxies `/api` → Express.
 
-On **GitHub Pages** the admin HTML loads at `/Levi-Zigza-Artist-Portfolio/admin/`, but there is no API — the page explains that uploads are local-only.
+### Technovate / Web chamber
+
+Hash route: `#technovate` (aliases `#web` / `#sites`). Top nav **Web**, hub portal **05 · NEPTUNE**, teleport beam like other chambers. CTA opens [technovateinc.org](https://www.technovateinc.org/) in a new tab; an iframe preview is attempted with a graceful fallback when framing is blocked.
+
+### Supabase Storage (recommended for GitHub Pages)
+
+Static Pages cannot run Express. Put media in a public Supabase bucket so the live site can load uploads after you admin-upload locally (or via a future Worker).
+
+1. Create a Supabase project.
+2. Run [`docs/supabase-storage.sql`](docs/supabase-storage.sql) in the SQL editor (creates public `portfolio` bucket + read policy).
+3. Add to `.env` (server):
+
+```
+SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_BUCKET=portfolio
+```
+
+4. Add to `.env` (client / Vite build for Pages):
+
+```
+VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_SUPABASE_BUCKET=portfolio
+```
+
+5. Restart `npm run dev`. Uploads write to Supabase; the manifest is mirrored to `portfolio/manifest.json`. Local `public/uploads/` remains the fallback when Supabase env is missing.
+
+**Never commit** `.env` or the service role key. The anon key is safe for public reads of a public bucket.
+
+### Cloudflare Worker (optional)
+
+Scaffold: `wrangler.toml` + `workers/manifest.js` — a thin edge proxy for `GET /api/manifest` that fetches the Supabase public manifest (no service role on the Worker).
+
+```bash
+npm i -D wrangler
+npx wrangler login          # once, on your machine — not required in CI
+# set SUPABASE_URL in wrangler.toml [vars] or the dashboard
+npx wrangler deploy
+```
+
+Prefer Supabase for storage; use the Worker only if you want a same-origin `/api/manifest` on Pages/Workers without Express.
+
+On **GitHub Pages** the admin HTML loads at `/Levi-Zigza-Artist-Portfolio/admin/`, but there is no Express API — use Supabase (or the Worker) so chambers still see cloud uploads.
 
 ### Env vars
 
@@ -95,6 +142,12 @@ On **GitHub Pages** the admin HTML loads at `/Levi-Zigza-Artist-Portfolio/admin/
 | `ADMIN_PASSWORD` | Admin login (required for uploads) |
 | `SESSION_SECRET` | Cookie HMAC secret (optional) |
 | `PORT` | API port (default `5174`) |
+| `SUPABASE_URL` | Server: Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server: upload/delete + manifest sync |
+| `SUPABASE_BUCKET` | Bucket name (default `portfolio`) |
+| `VITE_SUPABASE_URL` | Client: public manifest + media base |
+| `VITE_SUPABASE_ANON_KEY` | Client: optional (public URLs work without it) |
+| `VITE_SUPABASE_BUCKET` | Client bucket name (default `portfolio`) |
 | `TTS_PROVIDER` | `edge` (default) or `voicerss` |
 | `TTS_API_KEY` | VoiceRSS key when using voicerss |
 | `TTS_VOICE` | Edge short name or VoiceRSS voice |
@@ -109,7 +162,7 @@ On **GitHub Pages** the admin HTML loads at `/Levi-Zigza-Artist-Portfolio/admin/
 | GET | `/api/session` | — | `{ authenticated }` |
 | GET | `/api/manifest` | — | Public list of uploads |
 | POST | `/api/tts` | — | `{ text, index?, voice? }` → cached MP3 URL |
-| POST | `/api/upload` | cookie | multipart upload |
+| POST | `/api/upload` | cookie | multipart upload → Supabase or local disk |
 | DELETE | `/api/delete` | cookie | `{ "id": "..." }` |
 
-Files are stored under `public/uploads/{video|photo|audio|script}/`. Soft limits apply.
+Files land in Supabase `portfolio/{video\|photo\|audio\|script}/` when configured, otherwise `public/uploads/...`. Soft limits apply.

@@ -1,0 +1,25 @@
+# Cloudflare Worker — public manifest proxy (optional edge path)
+# Docs: https://github.com/cloudflare/workers-sdk
+#
+# This does NOT require Cloudflare login in CI. Deploy from a local machine:
+#   npm i -D wrangler
+#   npx wrangler login
+#   npx wrangler deploy
+#
+# Or bind the same vars in the Cloudflare dashboard after first create.
+
+name = "arist-portfolio-manifest"
+main = "workers/manifest.js"
+compatibility_date = "2024-11-01"
+
+# Account / route are set after `wrangler login` or via dashboard.
+# workers_dev = true keeps a *.workers.dev URL without custom domains.
+
+[vars]
+# Public project URL only — never put SERVICE_ROLE_KEY in a Worker var.
+# SUPABASE_URL = "https://YOUR_PROJECT.supabase.co"
+SUPABASE_BUCKET = "portfolio"
+
+# Optional: point GitHub Pages client at the Worker instead of hitting
+# Supabase directly by setting VITE_MANIFEST_WORKER_URL in .env and
+# teaching fetchManifest to prefer it (scaffold serves GET /api/manifest).
