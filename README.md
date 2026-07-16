@@ -14,7 +14,7 @@ Visitors never need a local ML / voice-changer server. Prefer shipping static MP
 
 ### Bake with Edge neural TTS (recommended, free, no key)
 
-Uses Microsoft Edge online TTS (`en-US-GuyNeural` — deep masculine) via the Python [`edge-tts`](https://pypi.org/project/edge-tts/) CLI (falls back to npm / Google Translate TTS if needed):
+Uses Microsoft Edge online TTS (`en-US-ChristopherNeural` — deep narrator, −20% rate / −5Hz pitch) via the Python [`edge-tts`](https://pypi.org/project/edge-tts/) CLI (falls back to npm / Google Translate TTS if needed):
 
 ```bash
 pip install edge-tts   # once

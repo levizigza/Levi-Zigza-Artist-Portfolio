@@ -24,5 +24,5 @@ texts.forEach((text, i) => {
   console.log(`| \`${file}\` | ${text} |`)
 })
 console.log(`\n${texts.length} lines. Run: npm run vo:bake`)
-console.log('Default: Microsoft Edge neural (en-US-DavisNeural), no API key.')
+console.log('Default: Microsoft Edge neural (en-US-ChristopherNeural), no API key.')
 console.log('Optional: TTS_PROVIDER=voicerss TTS_API_KEY=… npm run vo:bake')

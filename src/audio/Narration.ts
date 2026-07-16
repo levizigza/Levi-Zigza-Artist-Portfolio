@@ -471,7 +471,7 @@ export class Narration {
     const body = JSON.stringify({
       text,
       index: idx >= 0 ? idx : undefined,
-      voice: 'en-US-DavisNeural',
+      voice: 'en-US-ChristopherNeural',
     })
 
     try {

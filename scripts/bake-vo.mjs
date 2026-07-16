@@ -1,9 +1,9 @@
 /**
  * Bake monologue lines to public/audio/vo/line-XX.mp3 via neural TTS.
  *
- * Default: Microsoft Edge online TTS (en-US-DavisNeural) — free, no API key,
- * deep masculine neural voice. Optional VoiceRSS with TTS_PROVIDER=voicerss
- * and TTS_API_KEY in .env.
+ * Default: Microsoft Edge online TTS (en-US-ChristopherNeural) — free, no API key,
+ * deep narrator neural voice (−20% rate, −5Hz pitch). Optional VoiceRSS with
+ * TTS_PROVIDER=voicerss and TTS_API_KEY in .env.
  *
  * Usage: npm run vo:bake
  * Skips existing files unless VO_FORCE=1.

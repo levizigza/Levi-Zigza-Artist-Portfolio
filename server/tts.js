@@ -12,11 +12,12 @@ import path from 'node:path'
 import { createHash } from 'node:crypto'
 import { spawn } from 'node:child_process'
 
-/** Deep masculine US neural — western-adjacent, not cartoon. */
-export const DEFAULT_EDGE_VOICE = 'en-US-GuyNeural'
-/** Slightly slow for prairie drawl (pitch often breaks Edge; rate only). */
-export const DEFAULT_EDGE_RATE = '-15%'
-export const DEFAULT_EDGE_PITCH = '+0Hz'
+/** Deep narrator-style US neural — warm baritone depth (original voice, not a clone). */
+export const DEFAULT_EDGE_VOICE = 'en-US-ChristopherNeural'
+/** ~20% slower for measured documentary delivery. */
+export const DEFAULT_EDGE_RATE = '-20%'
+/** Slight pitch drop for extra gravel without breaking Edge. */
+export const DEFAULT_EDGE_PITCH = '-5Hz'
 
 /**
  * @param {string} text
@@ -86,7 +87,7 @@ async function synthesizeEdge(text, opts) {
  */
 function runEdgeCli(text, outPath, voice, rate, pitch) {
   return new Promise((resolve, reject) => {
-    // Pass --rate=-15% as one token so shells don't swallow the leading `-`.
+    // Pass --rate=-20% as one token so shells don't swallow the leading `-`.
     const args = [
       `--voice=${voice}`,
       `--rate=${rate}`,
