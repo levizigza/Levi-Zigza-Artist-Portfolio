@@ -58,7 +58,7 @@ export class SiteApp {
       link.addEventListener('click', (e) => {
         e.preventDefault()
         const page = link.dataset.nav
-        if (page) this.showPage(page)
+        if (page) this.showPage(page, link)
       })
     })
 
@@ -93,7 +93,7 @@ export class SiteApp {
     window.setTimeout(() => this.root.classList.add('hidden'), 500)
   }
 
-  showPage(id: string): void {
+  showPage(id: string, fromEl?: HTMLElement | null): void {
     if (id === this.currentPage && this.root.classList.contains('visible')) {
       this.applyPage(id, false)
       return
@@ -113,16 +113,35 @@ export class SiteApp {
         return
       }
 
+      const originX = this.beamOriginX(id, fromEl)
       this.beam.play(
         () => this.applyPage(id, true),
         () => {
           this.warpBusy = false
         },
+        originX,
       )
       return
     }
 
     this.applyPage(id, arriving)
+  }
+
+  /**
+   * Holobeam ceiling origin = the tab the user actually clicked.
+   * Portal cards still cast from the matching top-nav tab so the emitter
+   * stays on the chrome, not a mid-page card.
+   */
+  private beamOriginX(pageId: string, fromEl?: HTMLElement | null): number {
+    const tab =
+      (fromEl?.closest('.site-tab') as HTMLElement | null) ??
+      this.root.querySelector<HTMLElement>(`.site-tab[data-nav="${pageId}"]`)
+    const target = tab ?? fromEl
+    if (target) {
+      const r = target.getBoundingClientRect()
+      return r.left + r.width * 0.5
+    }
+    return window.innerWidth * 0.5
   }
 
   private applyPage(id: string, animate: boolean): void {

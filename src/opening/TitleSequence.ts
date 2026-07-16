@@ -237,7 +237,7 @@ export class TitleSequence {
     this.ensureLoop()
   }
 
-  /** Alternate: cosmic path tour (return-to-journey). */
+  /** @deprecated Prefer the full opening restart via startIdlePreview (Cosmos return). */
   startCosmicPath(): void {
     this.idle = false
     this.playing = true

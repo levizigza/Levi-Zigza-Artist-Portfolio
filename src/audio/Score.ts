@@ -970,8 +970,15 @@ export class Score {
   async startGate(): Promise<boolean> {
     await this.resume()
     if (!this.ctx || !this.master || !this.gateBus || !this.mysticBus) return false
-    // Journey/site own the buses — do not fight their crossfade
-    if (this.mode === 'journey' || this.mode === 'site') return this.gateBedLive
+
+    // Soft re-entry when Cosmos restarts the opening from site / mid-journey.
+    if (this.mode === 'journey' || this.mode === 'site') {
+      this.clearJourneyIntervals()
+      this.setAum(0)
+      this.setSunHeat(0)
+    } else if (this.mode === 'gate' && this.gateBedLive) {
+      return true
+    }
 
     const now = this.ctx.currentTime
     this.mode = 'gate'

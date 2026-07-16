@@ -66,7 +66,8 @@ const sequence = new TitleSequence(canvas, {
     const pct = Math.round(t * 100)
     progressLabel.textContent = label ? `${pct}% — ${label}` : `${pct}%`
     if (journeyAudioStarted) {
-      narration.syncToProgress(t)
+      // Never drive VO off dive progress (0.50–0.62 overlaps monologue cue times).
+      if (!sequence.isDiving()) narration.syncToProgress(t)
       score.setIntensity(t)
     }
   },
@@ -87,14 +88,17 @@ const sequence = new TitleSequence(canvas, {
     hideStoryEndUi()
     journeyUI.classList.remove('hidden')
     journeyUI.setAttribute('aria-hidden', 'false')
-    void ensureJourneyAudio()
+    // Dive / hyperspace: whoosh SFX only — myth bed + VO wait for origin.
+    void score.resume()
   },
   onOriginBegin() {
-    // VO starts with the origin myth only (not during hyperspace dive).
+    // VO + sci-fi myth bed start with the first sleeper frame (not mid-dive).
     hideStoryEndUi()
     narration.reset()
     narration.begin()
-    if (journeyAudioStarted) narration.syncToProgress(0)
+    void ensureMythAudio().then(() => {
+      narration.syncToProgress(0.02)
+    })
   },
   onStoryEnd() {
     showSkipIntro(false)
@@ -216,7 +220,7 @@ async function unlockGateAudio(): Promise<void> {
   }
 }
 
-async function ensureJourneyAudio(): Promise<void> {
+async function ensureMythAudio(): Promise<void> {
   try {
     await score.resume()
     if (!gateAudioUnlocked) {
@@ -224,10 +228,10 @@ async function ensureJourneyAudio(): Promise<void> {
       if (ok) gateAudioUnlocked = true
       else gateAudioUnlocked = true
     }
-    if (journeyAudioStarted) return
-    journeyAudioStarted = true
-    await score.start()
-    // Cowboy VO begins on origin (onOriginBegin) — not mid-dive.
+    if (!journeyAudioStarted) {
+      journeyAudioStarted = true
+      await score.start()
+    }
     void narration.unlockAudio()
   } catch {
     journeyAudioStarted = false
@@ -292,7 +296,7 @@ async function beginJourney(): Promise<void> {
     /* continue */
   }
   sequence.startJourney()
-  // Skip + journey audio also fire via onJourneyBegin
+  // Skip + journey UI also fire via onJourneyBegin (myth audio waits for origin)
 }
 
 function revealSite(): void {
@@ -339,18 +343,45 @@ function returnToJourney(): void {
   veil.classList.add('active')
 
   window.setTimeout(() => {
-    mode = 'journey'
-    site.hide()
+    // Full opening replay: potentiality → boom → eye → Enter → hyperspace → origin.
+    mode = 'potentiality'
+    boomBegun = false
+    journeyBegun = false
     siteShown = false
-    canvas.classList.remove('hidden')
-    journeyUI.classList.remove('hidden', 'fading')
-    journeyUI.setAttribute('aria-hidden', 'false')
-    showSkipIntro(true)
+    diveSkipArmed = false
+    if (diveSkipTimer) {
+      window.clearTimeout(diveSkipTimer)
+      diveSkipTimer = 0
+    }
     journeyAudioStarted = false
+
+    site.hide()
+    canvas.classList.remove('hidden')
+    journeyUI.classList.add('hidden')
+    journeyUI.classList.remove('fading')
+    journeyUI.setAttribute('aria-hidden', 'true')
+    hideStoryEndUi()
+    showSkipIntro(false)
+
+    narration.stop()
     narration.reset()
     sequence.setActive(true)
-    sequence.startCosmicPath()
-    void ensureJourneyAudio()
+    sequence.startIdlePreview()
+    setGateVisible(true)
+    enterBtn.setAttribute('aria-label', 'Enter — begin')
+    positionEnterHit()
+    requestAnimationFrame(syncEnterHitLoop)
+
+    void (async () => {
+      try {
+        await score.resume()
+        gateAudioUnlocked = true
+        await score.startGate()
+      } catch {
+        /* visual opening still runs */
+      }
+    })()
+
     veil.classList.remove('active')
     transitioning = false
   }, 550)

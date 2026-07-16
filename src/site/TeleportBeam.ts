@@ -19,6 +19,9 @@ export class TeleportBeam {
   private stage: HTMLElement | null
   private canvas: HTMLCanvasElement | null
   private ctx: CanvasRenderingContext2D | null
+  private emitterEl: HTMLElement | null
+  private columnEl: HTMLElement | null
+  private floorEl: HTMLElement | null
   private particles: Particle[] = []
   private raf = 0
   private phase: 'idle' | 'out' | 'in' = 'idle'
@@ -27,15 +30,21 @@ export class TeleportBeam {
   private onMid: (() => void) | null = null
   private onDone: (() => void) | null = null
   private midFired = false
+  /** Ceiling emitter X in CSS pixels — aligned to the clicked tab. */
+  private originX = 0
 
   constructor(root: HTMLElement) {
     this.root = root
     this.stage = root.querySelector('#teleport-stage')
     this.canvas = root.querySelector('#teleport-canvas')
     this.ctx = this.canvas?.getContext('2d') ?? null
+    this.emitterEl = root.querySelector('.teleport-emitter')
+    this.columnEl = root.querySelector('.teleport-column')
+    this.floorEl = root.querySelector('.teleport-floor')
     this.reducedMotion =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    this.originX = window.innerWidth * 0.5
     this.resize()
     window.addEventListener('resize', () => this.resize())
   }
@@ -43,8 +52,9 @@ export class TeleportBeam {
   /**
    * Run full transport. `onMid` fires when dematerialize completes (swap chamber).
    * `onDone` when rematerialize finishes.
+   * `originX` — CSS-pixel X of the clicked tab (beam casts from that ceiling point).
    */
-  play(onMid: () => void, onDone: () => void): void {
+  play(onMid: () => void, onDone: () => void, originX?: number): void {
     if (this.reducedMotion) {
       onMid()
       onDone()
@@ -57,12 +67,25 @@ export class TeleportBeam {
     this.particles = []
     this.phase = 'out'
     this.t0 = performance.now()
+    this.originX =
+      typeof originX === 'number' && Number.isFinite(originX)
+        ? originX
+        : window.innerWidth * 0.5
+    this.applyOriginCss(this.originX)
     this.root.classList.add('teleporting', 'teleport-out')
     this.root.classList.remove('teleport-in')
     this.stage?.classList.add('active')
     this.stage?.setAttribute('aria-hidden', 'false')
     this.seedBurst(0.55)
     this.loop()
+  }
+
+  /** Align CSS emitter / column / floor to the tab X (canvas draws the same). */
+  private applyOriginCss(x: number): void {
+    const left = `${x}px`
+    if (this.emitterEl) this.emitterEl.style.left = left
+    if (this.columnEl) this.columnEl.style.left = left
+    if (this.floorEl) this.floorEl.style.left = left
   }
 
   private resize(): void {
@@ -120,9 +143,8 @@ export class TeleportBeam {
   }
 
   private seedBurst(intensity: number): void {
-    const w = window.innerWidth
     const h = window.innerHeight
-    const cx = w * 0.5
+    const cx = this.originX
     const count = Math.floor(70 * intensity + 40)
     for (let i = 0; i < count; i++) {
       const spread = 28 + Math.random() * 55
@@ -148,7 +170,7 @@ export class TeleportBeam {
     const h = canvas.clientHeight || window.innerHeight
     ctx.clearRect(0, 0, w, h)
 
-    const cx = w * 0.5
+    const cx = this.originX
     const progress =
       this.phase === 'out'
         ? Math.min(1, elapsed / 380)
