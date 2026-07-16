@@ -300,21 +300,43 @@ async function main() {
   app.use(express.static(distDir))
   app.use(express.static(publicDir))
 
-  // Trailing slash so relative ./admin.css + ./admin.js resolve correctly
-  app.get('/admin', (_req, res) => {
-    res.redirect(301, '/admin/')
-  })
-  app.get('/admin/', (_req, res) => {
-    res.sendFile(path.join(publicDir, 'admin', 'index.html'))
-  })
+  const adminHtml = path.join(publicDir, 'admin', 'index.html')
+  const pagesBase = '/Levi-Zigza-Artist-Portfolio'
+  // Trailing slash so relative ./admin.css + ./admin.js resolve correctly.
+  // Serve under both `/admin/` (npm start) and the GitHub Pages base path.
+  for (const root of ['/admin', `${pagesBase}/admin`]) {
+    app.get(root, (_req, res) => {
+      res.redirect(301, `${root}/`)
+    })
+    app.get(`${root}/`, (_req, res) => {
+      res.sendFile(adminHtml)
+    })
+  }
 
-  // SPA fallback for portfolio shell (not /api)
+  // SPA fallback for portfolio shell (not /api, not admin)
   app.use((req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       next()
       return
     }
     if (req.path.startsWith('/api')) {
+      next()
+      return
+    }
+    if (req.path === '/admin' || req.path.startsWith('/admin/')) {
+      next()
+      return
+    }
+    if (req.path === pagesBase || req.path === `${pagesBase}/`) {
+      res.sendFile(path.join(distDir, 'index.html'), (err) => {
+        if (err) next()
+      })
+      return
+    }
+    if (
+      req.path === `${pagesBase}/admin` ||
+      req.path.startsWith(`${pagesBase}/admin/`)
+    ) {
       next()
       return
     }

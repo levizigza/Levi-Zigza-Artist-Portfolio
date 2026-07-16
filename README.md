@@ -75,10 +75,16 @@ npm run vo:manifest
 
 Chambers load media from a JSON manifest (`public/uploads/manifest.json`) via `/api/manifest`.
 
-1. Copy `.env.example` → `.env` and set `ADMIN_PASSWORD`.
-2. Run `npm run dev` (Vite on `:5173` proxies `/api` → Express on `:5174`).
-3. Open **http://localhost:5173/Levi-Zigza-Artist-Portfolio/admin/** (site `base` path — not bare `/admin`).
-4. Upload by chamber type (film / photo / music / scripts).
+**Works now (local):**
+
+1. `cp .env.example .env` — default password is `admin` (change anytime; `.env` is gitignored).
+2. `npm run dev` — starts **both** Vite (`:5173`) and the API (`:5174`). Do not run Vite alone.
+3. Open **http://localhost:5173/Levi-Zigza-Artist-Portfolio/admin/**  
+   (or click **Admin** on the gate screen). Trailing slash optional — it redirects.
+4. Sign in with `ADMIN_PASSWORD` from `.env` (default from `.env.example`: `admin`).
+5. Upload by chamber type (film / photo / music / scripts).
+
+Bare `http://localhost:5173/admin/` redirects to the base-path URL above. Vite proxies `/api` → Express.
 
 On **GitHub Pages** the admin HTML loads at `/Levi-Zigza-Artist-Portfolio/admin/`, but there is no API — the page explains that uploads are local-only.
 

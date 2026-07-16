@@ -161,6 +161,28 @@ body {
   padding-left: 0.7em;
 }
 
+/* Local chamber uploads — keep quiet so it never competes with the gate */
+.admin-gate-link {
+  position: absolute;
+  right: clamp(0.85rem, 3vw, 1.5rem);
+  bottom: clamp(0.85rem, 3vh, 1.4rem);
+  z-index: 3;
+  pointer-events: auto;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: rgba(160, 185, 220, 0.45);
+  transition: color 0.2s ease;
+}
+
+.admin-gate-link:hover,
+.admin-gate-link:focus-visible {
+  color: rgba(210, 225, 255, 0.9);
+  outline: none;
+}
+
 @keyframes brain-cta-blink {
   0%,
   100% {
