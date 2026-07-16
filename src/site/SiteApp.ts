@@ -6,6 +6,7 @@
 import { fetchLoreSnippet, formatLoreQuote } from '../content/loreApi'
 import { CassetteDeck } from './CassetteDeck'
 import { ChamberLife, type BeatSource } from './ChamberLife'
+import { FilmStripAudio } from './FilmStripAudio'
 import { hydrateChambers } from './hydrateChambers'
 import { TabletChamber } from './TabletChamber'
 import { TeleportBeam } from './TeleportBeam'
@@ -15,6 +16,8 @@ export type SiteHandlers = {
   onReturnJourney: () => void
   onChamberChange?: (page: string) => void
   onTeleport?: () => void
+  /** Chamber media (Walkman / film) claiming exclusive audio focus. */
+  onMediaExclusive?: (active: boolean) => void
 }
 
 const PLANET_SIGNAL: Record<string, string> = {
@@ -33,6 +36,7 @@ export class SiteApp {
   private life: ChamberLife
   private beam: TeleportBeam
   private deck: CassetteDeck
+  private film: FilmStripAudio
   private currentPage = 'home'
   private warpBusy = false
   private signalEl: HTMLElement | null = null
@@ -43,7 +47,12 @@ export class SiteApp {
     this.handlers = handlers
     this.pages = root.querySelectorAll<HTMLElement>('.site-page')
     this.navLinks = root.querySelectorAll<HTMLAnchorElement>('[data-nav]')
-    this.deck = new CassetteDeck(root)
+    this.deck = new CassetteDeck(root, {
+      onPlaybackChange: (playing) => this.handlers.onMediaExclusive?.(playing),
+    })
+    this.film = new FilmStripAudio(root, {
+      onExclusiveChange: (active) => this.handlers.onMediaExclusive?.(active),
+    })
     new TabletChamber(root)
     this.life = new ChamberLife(root, {
       getLevel: () => Math.max(beat.getLevel(), this.deck.getLevel() * 0.7),
@@ -72,8 +81,10 @@ export class SiteApp {
   private async loadChamberMedia(): Promise<void> {
     try {
       await hydrateChambers(this.root)
+      this.film.bind()
     } catch {
       /* keep placeholders */
+      this.film.bind()
     }
   }
 
@@ -87,10 +98,17 @@ export class SiteApp {
   }
 
   hide(): void {
+    this.silenceMedia()
     this.root.classList.remove('visible')
     this.root.setAttribute('aria-hidden', 'true')
     this.life.stop()
     window.setTimeout(() => this.root.classList.add('hidden'), 500)
+  }
+
+  /** Stop Walkman + film focus (Cosmos return / leave site). */
+  silenceMedia(): void {
+    this.deck.silence()
+    this.film.release()
   }
 
   showPage(id: string, fromEl?: HTMLElement | null): void {
@@ -145,6 +163,10 @@ export class SiteApp {
   }
 
   private applyPage(id: string, animate: boolean): void {
+    const leaving = this.currentPage
+    if (leaving === 'music' && id !== 'music') this.deck.silence()
+    if (leaving === 'video' && id !== 'video') this.film.release()
+
     this.currentPage = id
     this.pages.forEach((page) => {
       const active = page.dataset.page === id

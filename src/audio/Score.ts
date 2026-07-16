@@ -3,7 +3,8 @@
  * gate: soft futuristic space ambient (Sagan awe — quiet pads, star dust)
  * journey (post-Enter origin): synth / space sci-fi underscore under cowboy VO
  *   — pads, arps, soft pulse, shimmer (distinct from the soft gate bed)
- * site: soft mystic underscore
+ * site: cinematic desert ambient (Dune-like — deep drones, sparse brass stabs,
+ *   wind hush, distant choir) — original procedural, not licensed stems
  * SFX: planet whoosh + sun heat crackle (via Sfx, muted with the score)
  */
 
@@ -12,6 +13,8 @@ import { Sfx } from './Sfx'
 type ScoreMode = 'off' | 'gate' | 'journey' | 'site'
 
 const MUTE_STORAGE_KEY = 'lz-audio-muted'
+/** Site underscore master target when exclusive media is not holding the bus. */
+const SITE_MASTER_GAIN = 0.3
 
 export class Score {
   private ctx: AudioContext | null = null
@@ -36,6 +39,7 @@ export class Score {
   private swellInterval = 0
   private gatePingInterval = 0
   private arpInterval = 0
+  private brassInterval = 0
   private intensity = 0
   private mode: ScoreMode = 'off'
   private lastAum = 0
@@ -47,6 +51,12 @@ export class Score {
   private sfx = new Sfx()
   private sciFiPadGains: GainNode[] = []
   private shimmerGains: GainNode[] = []
+  private droneGains: GainNode[] = []
+  private windGain: GainNode | null = null
+  private brassBus: GainNode | null = null
+  /** Chamber media (Walkman / film) holding exclusive audio focus. */
+  private exclusiveMedia = false
+  private exclusiveDepth = 0
 
   static readStoredMute(): boolean {
     try {
@@ -143,12 +153,17 @@ export class Score {
     this.addDrone(82.41, 0.055, 'sine') // E2
     this.addDrone(110, 0.048, 'triangle') // A2
     this.addDrone(164.81, 0.028, 'sine') // E3
+    // Extra low site weight — Dune-like desert floor (quiet until site retune)
+    this.addDrone(36.71, 0.02, 'sine') // D1
+    this.addDrone(41.2, 0.016, 'triangle') // E1
 
     this.addNoisePad()
     this.addSoftPulse()
     this.addChoirPad()
     this.addHighShimmer()
     this.addSciFiJourneyLayers()
+    this.addDesertWind()
+    this.addBrassBus()
     this.addSwellBus()
     this.addAumBus()
     this.addGateSpaceBed()
@@ -168,6 +183,7 @@ export class Score {
 
     const g = this.ctx.createGain()
     g.gain.value = gain
+    this.droneGains.push(g)
 
     const filter = this.ctx.createBiquadFilter()
     filter.type = 'lowpass'
@@ -198,6 +214,64 @@ export class Score {
     this.nodes.push(osc, g, filter, lfoGain, fGain)
     this.lfos.push(lfo, fLfo)
     this.filterTargets.push(filter)
+  }
+
+  /** Soft desert wind hush — filtered noise bed for site chambers. */
+  private addDesertWind(): void {
+    const dest = this.mysticDest()
+    if (!this.ctx || !dest) return
+    const bufLen = 2 * this.ctx.sampleRate
+    const buffer = this.ctx.createBuffer(1, bufLen, this.ctx.sampleRate)
+    const data = buffer.getChannelData(0)
+    let last = 0
+    for (let i = 0; i < bufLen; i++) {
+      // Brown-ish noise — dry wind rather than white hiss
+      const white = Math.random() * 2 - 1
+      last = (last + 0.02 * white) / 1.02
+      data[i] = last * 3.5
+    }
+    const noise = this.ctx.createBufferSource()
+    noise.buffer = buffer
+    noise.loop = true
+
+    const hp = this.ctx.createBiquadFilter()
+    hp.type = 'highpass'
+    hp.frequency.value = 180
+    const bp = this.ctx.createBiquadFilter()
+    bp.type = 'bandpass'
+    bp.frequency.value = 620
+    bp.Q.value = 0.55
+
+    const g = this.ctx.createGain()
+    g.gain.value = 0.0001
+    this.windGain = g
+
+    const lfo = this.ctx.createOscillator()
+    lfo.frequency.value = 0.07
+    const lfoGain = this.ctx.createGain()
+    lfoGain.gain.value = 0.004
+    lfo.connect(lfoGain)
+    lfoGain.connect(g.gain)
+
+    noise.connect(hp)
+    hp.connect(bp)
+    bp.connect(g)
+    g.connect(dest)
+    noise.start()
+    lfo.start()
+    this.nodes.push(noise, hp, bp, g, lfoGain)
+    this.lfos.push(lfo)
+  }
+
+  /** Quiet bus for sparse brass-like stabs (site mode only). */
+  private addBrassBus(): void {
+    const dest = this.mysticDest()
+    if (!this.ctx || !dest) return
+    const bus = this.ctx.createGain()
+    bus.gain.value = 1
+    this.brassBus = bus
+    bus.connect(dest)
+    this.nodes.push(bus)
   }
 
   private addNoisePad(): void {
@@ -945,6 +1019,97 @@ export class Score {
       clearInterval(this.arpInterval)
       this.arpInterval = 0
     }
+    this.clearSiteBrass()
+  }
+
+  /**
+   * Sparse brass-like synth stab — saw/triangle stack with short envelope.
+   * Homage texture only; not a licensed Dune / Zimmer cue.
+   */
+  private scheduleBrassStab(): void {
+    if (!this.ctx || !this.brassBus || this.mode !== 'site' || this.exclusiveMedia) return
+    const now = this.ctx.currentTime
+    // Open fifths / dark modes — desert fanfare fragments
+    const roots = [55, 65.41, 73.42, 82.41, 98]
+    const root = roots[Math.floor(Math.random() * roots.length)]!
+    const partials: { mul: number; type: OscillatorType; g: number }[] = [
+      { mul: 1, type: 'sawtooth', g: 0.55 },
+      { mul: 1.5, type: 'triangle', g: 0.28 },
+      { mul: 2, type: 'sawtooth', g: 0.12 },
+    ]
+    const dur = 1.8 + Math.random() * 1.4
+    const peak = 0.045 + Math.random() * 0.02
+
+    for (const p of partials) {
+      const osc = this.ctx.createOscillator()
+      osc.type = p.type
+      osc.frequency.value = root * p.mul
+      const filter = this.ctx.createBiquadFilter()
+      filter.type = 'lowpass'
+      filter.frequency.setValueAtTime(480, now)
+      filter.frequency.exponentialRampToValueAtTime(220, now + dur * 0.85)
+      filter.Q.value = 1.1
+      const g = this.ctx.createGain()
+      g.gain.setValueAtTime(0.0001, now)
+      g.gain.exponentialRampToValueAtTime(peak * p.g, now + 0.08)
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur)
+      osc.connect(filter)
+      filter.connect(g)
+      g.connect(this.brassBus)
+      osc.start(now)
+      osc.stop(now + dur + 0.05)
+    }
+  }
+
+  private ensureSiteBrass(): void {
+    if (this.brassInterval) return
+    this.brassInterval = window.setInterval(() => {
+      if (this.mode === 'site' && !this.exclusiveMedia && Math.random() > 0.42) {
+        this.scheduleBrassStab()
+      }
+    }, 9200)
+  }
+
+  private clearSiteBrass(): void {
+    if (this.brassInterval) {
+      clearInterval(this.brassInterval)
+      this.brassInterval = 0
+    }
+  }
+
+  /**
+   * Duck / restore the site score while chamber media (Walkman, film) owns audio.
+   * Nested depth so concurrent media sources can claim/release safely.
+   * Mute toggle still applies via muteGain on top of this.
+   */
+  setExclusiveMedia(active: boolean): void {
+    if (active) this.exclusiveDepth += 1
+    else this.exclusiveDepth = Math.max(0, this.exclusiveDepth - 1)
+    const next = this.exclusiveDepth > 0
+    if (next === this.exclusiveMedia) return
+    this.exclusiveMedia = next
+    this.applyExclusiveDuck(next ? 0.55 : 1.1)
+  }
+
+  /** Force-clear exclusive media (chamber leave / return to Cosmos). */
+  clearExclusiveMedia(): void {
+    this.exclusiveDepth = 0
+    if (!this.exclusiveMedia) return
+    this.exclusiveMedia = false
+    this.applyExclusiveDuck(0.9)
+  }
+
+  isExclusiveMedia(): boolean {
+    return this.exclusiveMedia
+  }
+
+  private applyExclusiveDuck(seconds: number): void {
+    if (!this.ctx || !this.master || this.mode !== 'site') return
+    const now = this.ctx.currentTime
+    const target = this.exclusiveMedia ? 0.0001 : SITE_MASTER_GAIN
+    this.master.gain.cancelScheduledValues(now)
+    this.master.gain.setValueAtTime(Math.max(0.0001, this.master.gain.value), now)
+    this.master.gain.linearRampToValueAtTime(target, now + Math.max(0.08, seconds))
   }
 
   /** Planet / cosmos flyby whoosh — respects mute via master → muteGain. */
@@ -974,8 +1139,14 @@ export class Score {
     // Soft re-entry when Cosmos restarts the opening from site / mid-journey.
     if (this.mode === 'journey' || this.mode === 'site') {
       this.clearJourneyIntervals()
+      this.exclusiveDepth = 0
+      this.exclusiveMedia = false
       this.setAum(0)
       this.setSunHeat(0)
+      if (this.windGain) {
+        const t = this.ctx.currentTime
+        this.windGain.gain.setTargetAtTime(0.0001, t, 0.35)
+      }
     } else if (this.mode === 'gate' && this.gateBedLive) {
       return true
     }
@@ -1019,7 +1190,11 @@ export class Score {
     this.mode = 'journey'
     this.started = true
     this.clearGatePings()
+    this.clearSiteBrass()
+    this.exclusiveDepth = 0
+    this.exclusiveMedia = false
     this.applyMuteGain(0.05)
+    this.resetJourneyLayerMix()
 
     const now = this.ctx.currentTime
     this.master.gain.cancelScheduledValues(now)
@@ -1042,6 +1217,31 @@ export class Score {
     window.setTimeout(() => {
       if (this.mode === 'journey') this.scheduleSwell()
     }, fromGate ? 9000 : 7000)
+  }
+
+  /** Restore journey-default pad mix after a site (desert) retune. */
+  private resetJourneyLayerMix(): void {
+    if (!this.ctx) return
+    const now = this.ctx.currentTime
+    const droneBase = [0.08, 0.055, 0.048, 0.028, 0.02, 0.016]
+    this.droneGains.forEach((g, i) => {
+      g.gain.setTargetAtTime(droneBase[i] ?? 0.03, now, 0.8)
+    })
+    if (this.windGain) {
+      this.windGain.gain.setTargetAtTime(0.0001, now, 0.4)
+    }
+    for (const sg of this.sciFiPadGains) {
+      sg.gain.setTargetAtTime(0.028, now, 0.9)
+    }
+    for (const sh of this.shimmerGains) {
+      sh.gain.setTargetAtTime(0.0035, now, 0.9)
+    }
+    for (const cg of this.choirGains) {
+      cg.gain.setTargetAtTime(0.007, now, 0.9)
+    }
+    if (this.pulseGain) {
+      this.pulseGain.gain.setTargetAtTime(0.014, now, 0.8)
+    }
   }
 
   setIntensity(progress: number): void {
@@ -1076,57 +1276,85 @@ export class Score {
     this.clearJourneyIntervals()
     this.setAum(0)
     this.setSunHeat(0)
+    this.exclusiveDepth = 0
+    this.exclusiveMedia = false
     this.applyMuteGain(0.05)
     const now = this.ctx.currentTime
+    const fade = Math.max(0.6, seconds)
+
+    // Soft cinematic rise into desert chamber score
     this.master.gain.cancelScheduledValues(now)
     this.master.gain.setValueAtTime(Math.max(0.0001, this.master.gain.value), now)
-    this.master.gain.linearRampToValueAtTime(0.26, now + seconds)
+    this.master.gain.linearRampToValueAtTime(SITE_MASTER_GAIN, now + fade)
 
     this.gateBus.gain.cancelScheduledValues(now)
     this.gateBus.gain.setTargetAtTime(0.0001, now, 0.4)
     this.mysticBus.gain.cancelScheduledValues(now)
-    this.mysticBus.gain.setTargetAtTime(1, now, 0.5)
+    this.mysticBus.gain.setTargetAtTime(1, now, 0.55)
 
+    // Deep drones up; journey sci-fi color down — Dune-like floor
+    const dronePeaks = [0.11, 0.085, 0.055, 0.032, 0.048, 0.038]
+    this.droneGains.forEach((g, i) => {
+      g.gain.setTargetAtTime(dronePeaks[i] ?? 0.04, now, 1.2)
+    })
     for (const f of this.filterTargets) {
-      f.frequency.setTargetAtTime(340, now, 1.8)
+      f.frequency.setTargetAtTime(260, now, 1.6)
     }
     if (this.pulseGain) {
-      this.pulseGain.gain.setTargetAtTime(0.007, now, 1.4)
+      this.pulseGain.gain.setTargetAtTime(0.011, now, 1.4)
     }
     for (const cg of this.choirGains) {
-      cg.gain.setTargetAtTime(0.005, now, 1.5)
+      cg.gain.setTargetAtTime(0.014, now, 1.5)
     }
     for (const sg of this.sciFiPadGains) {
-      sg.gain.setTargetAtTime(0.012, now, 1.6)
+      sg.gain.setTargetAtTime(0.006, now, 1.6)
     }
     for (const sh of this.shimmerGains) {
-      sh.gain.setTargetAtTime(0.002, now, 1.5)
+      sh.gain.setTargetAtTime(0.0008, now, 1.5)
     }
+    if (this.windGain) {
+      this.windGain.gain.setTargetAtTime(0.018, now, 1.8)
+    }
+
+    this.ensureSiteBrass()
+    window.setTimeout(() => {
+      if (this.mode === 'site' && !this.exclusiveMedia) this.scheduleBrassStab()
+    }, Math.round(fade * 1000) + 2200)
   }
 
   setChamberAmbience(page: string): void {
     if (!this.ctx || !this.started || this.mode !== 'site') return
     const now = this.ctx.currentTime
     const filterByPage: Record<string, number> = {
-      home: 380,
-      video: 480,
-      music: 580,
-      scripts: 340,
-      photography: 420,
+      home: 280,
+      video: 340,
+      music: 400,
+      scripts: 240,
+      photography: 310,
     }
     const pulseByPage: Record<string, number> = {
-      home: 0.007,
-      video: 0.01,
+      home: 0.01,
+      video: 0.012,
       music: 0.014,
-      scripts: 0.006,
-      photography: 0.009,
+      scripts: 0.008,
+      photography: 0.011,
     }
-    const fq = filterByPage[page] ?? 380
+    const windByPage: Record<string, number> = {
+      home: 0.016,
+      video: 0.012,
+      music: 0.01,
+      scripts: 0.02,
+      photography: 0.022,
+    }
+    const fq = filterByPage[page] ?? 280
     for (const f of this.filterTargets) {
       f.frequency.setTargetAtTime(fq, now, 1.2)
     }
     if (this.pulseGain) {
-      this.pulseGain.gain.setTargetAtTime(pulseByPage[page] ?? 0.007, now, 1.0)
+      this.pulseGain.gain.setTargetAtTime(pulseByPage[page] ?? 0.01, now, 1.0)
+    }
+    if (this.windGain && !this.exclusiveMedia) {
+      this.windGain.gain.setTargetAtTime(windByPage[page] ?? 0.016, now, 1.4)
     }
   }
 
@@ -1215,8 +1443,13 @@ export class Score {
     this.mode = 'site'
     this.clearGatePings()
     this.clearJourneyIntervals()
+    this.clearExclusiveMedia()
     this.setAum(0)
     this.setSunHeat(0)
+    if (this.windGain) {
+      const t = this.ctx.currentTime
+      this.windGain.gain.setTargetAtTime(0.0001, t, 0.3)
+    }
     const now = this.ctx.currentTime
     this.master.gain.cancelScheduledValues(now)
     this.master.gain.setValueAtTime(Math.max(0.0001, this.master.gain.value), now)
@@ -1226,6 +1459,7 @@ export class Score {
   stop(): void {
     this.clearJourneyIntervals()
     this.clearGatePings()
+    this.clearExclusiveMedia()
     this.setAum(0)
     this.setSunHeat(0)
     if (this.ctx && this.master) {

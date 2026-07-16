@@ -9,6 +9,11 @@ const INSERT_MS = 920
 const CLOSE_MS = 320
 const EJECT_MS = 480
 
+export type CassetteDeckHandlers = {
+  /** Fired when playback starts (true) or stops/ejects (false). */
+  onPlaybackChange?: (playing: boolean) => void
+}
+
 export class CassetteDeck {
   private deck: HTMLElement | null
   private status: HTMLElement | null
@@ -28,8 +33,10 @@ export class CassetteDeck {
   private tone: { ctx: AudioContext; stop: () => void } | null = null
   private timers: number[] = []
   private reducedMotion = false
+  private handlers: CassetteDeckHandlers
 
-  constructor(root: HTMLElement) {
+  constructor(root: HTMLElement, handlers: CassetteDeckHandlers = {}) {
+    this.handlers = handlers
     this.deck = root.querySelector('#tape-deck')
     this.status = root.querySelector('#deck-status')
     this.loaded = root.querySelector('#deck-loaded')
@@ -206,9 +213,11 @@ export class CassetteDeck {
 
   private play(): void {
     if (!this.loadedId || this.busy) return
+    const wasPlaying = this.playing
     this.playing = true
     this.deck?.classList.add('is-playing')
     this.setControls(true, true)
+    if (!wasPlaying) this.handlers.onPlaybackChange?.(true)
 
     void this.audio
       ?.play()
@@ -217,21 +226,25 @@ export class CassetteDeck {
   }
 
   private stop(): void {
+    const wasPlaying = this.playing
     this.playing = false
     this.deck?.classList.remove('is-playing')
     this.audio?.pause()
     if (this.audio) this.audio.currentTime = 0
     this.stopTone()
     if (this.loadedId && !this.busy) this.setControls(true, false)
+    if (wasPlaying) this.handlers.onPlaybackChange?.(false)
   }
 
   private stopAudioOnly(): void {
+    const wasPlaying = this.playing
     this.playing = false
     this.deck?.classList.remove('is-playing')
     this.audio?.pause()
     if (this.audio) this.audio.currentTime = 0
     this.audio = null
     this.stopTone()
+    if (wasPlaying) this.handlers.onPlaybackChange?.(false)
   }
 
   private startTone(): void {
@@ -360,6 +373,15 @@ export class CassetteDeck {
   /** Soft tick for chamber ambience when deck is spinning */
   getLevel(): number {
     return this.playing ? 0.55 + Math.random() * 0.25 : 0
+  }
+
+  isPlaying(): boolean {
+    return this.playing
+  }
+
+  /** Stop playback without eject choreography (chamber leave / Cosmos return). */
+  silence(): void {
+    this.stopAudioOnly()
   }
 
   destroy(): void {

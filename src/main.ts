@@ -154,6 +154,7 @@ const site = new SiteApp(
     onReturnJourney: () => returnToJourney(),
     onChamberChange: (page) => score.setChamberAmbience(page),
     onTeleport: () => score.playTeleportChirp(),
+    onMediaExclusive: (active) => score.setExclusiveMedia(active),
   },
   { getLevel: () => score.getLevel() },
 )
@@ -342,6 +343,9 @@ function returnToJourney(): void {
   if (mode !== 'site' || transitioning) return
   transitioning = true
   veil.classList.add('active')
+  site.silenceMedia()
+  score.clearExclusiveMedia()
+  void score.fadeOut(0.7)
 
   window.setTimeout(() => {
     // Full opening replay: potentiality → boom → eye → Enter → hyperspace → origin.

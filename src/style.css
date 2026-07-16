@@ -226,6 +226,11 @@ body {
   .journey-ankh {
     animation: none;
   }
+
+  .story-press-enter {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 .gate-inner {
@@ -262,7 +267,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.85rem;
+  gap: 1rem;
   margin-bottom: 0.35rem;
   pointer-events: none;
   opacity: 0;
@@ -282,6 +287,55 @@ body {
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
+}
+
+/* Super Mario–style title-card prompt — impossible to miss on the hold frame */
+.story-press-enter {
+  margin: 0 0 0.15rem;
+  padding: 0.35rem 0.75rem;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: clamp(0.78rem, 3.6vw, 1.85rem);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  color: #f4e8a8;
+  text-shadow:
+    0 0 2px #1a1208,
+    3px 3px 0 #2a1a08,
+    0 0 18px rgba(240, 196, 24, 0.45),
+    0 0 36px rgba(255, 140, 40, 0.25);
+  white-space: normal;
+  max-width: min(92vw, 36rem);
+  line-height: 1.35;
+  animation: story-press-blink 0.85s steps(2, end) infinite;
+}
+
+.story-enter-kbd {
+  display: inline-block;
+  margin: 0 0.12em;
+  padding: 0.12em 0.45em 0.08em;
+  border: 3px solid #f0c018;
+  border-radius: 0;
+  color: #fff8d0;
+  background: #1a1408;
+  box-shadow:
+    3px 3px 0 #3a2810,
+    inset 0 0 0 1px rgba(255, 220, 100, 0.35);
+  letter-spacing: 0.22em;
+  padding-left: 0.55em;
+}
+
+@keyframes story-press-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0.18;
+  }
 }
 
 .journey-ankh {
