@@ -211,8 +211,8 @@ export class PotentialitySphere {
     ctx.fillStyle = 'rgba(200, 215, 240, 0.9)'
     ctx.font = `600 ${Math.max(11, Math.min(w, h) * 0.022)}px Syne, sans-serif`
     ctx.textAlign = 'center'
-    ctx.letterSpacing = '0.35em'
-    ctx.fillText('BALYAOKO', cx, cy + R * 2.8 + Math.min(w, h) * 0.04)
+    ctx.letterSpacing = '0.22em'
+    ctx.fillText('LEVI ZIGZA', cx, cy + R * 2.8 + Math.min(w, h) * 0.04)
     ctx.restore()
   }
 }

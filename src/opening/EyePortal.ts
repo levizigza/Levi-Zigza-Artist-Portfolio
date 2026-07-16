@@ -900,7 +900,7 @@ export class EyePortal {
   }
 
   /**
-   * BALYAOKO as light projected from the pupil/iris —
+   * LEVI ZIGZA as light projected from the pupil/iris —
    * volumetric cones, beam filaments, scanline hologram plate.
    * Scale + glow intensity locked to eyeBreath (same iris pulse phase).
    */
@@ -914,8 +914,9 @@ export class EyePortal {
     w: number,
     time: number,
   ): void {
-    const name = 'BALYAOKO'
-    const nameSize = Math.min(irisR * 0.24, w * 0.085, 72)
+    const name = 'LEVI ZIGZA'
+    // Slightly tighter sizing so the longer glyph run stays in-iris
+    const nameSize = Math.min(irisR * 0.2, w * 0.072, 64)
     const nameCy = pupilCy - pupilR * 0.12
     const reduced = prefersReducedMotion()
 
@@ -926,7 +927,7 @@ export class EyePortal {
     ctx.font = `700 ${Math.floor(nameSize)}px "Sora", "Syne", sans-serif`
 
     const metrics = ctx.measureText(name)
-    const textW = Math.max(metrics.width, nameSize * 5.2)
+    const textW = Math.max(metrics.width, nameSize * 6.4)
     const textH = nameSize * 1.15
     const halfW = textW * 0.52
     const halfH = textH * 0.55

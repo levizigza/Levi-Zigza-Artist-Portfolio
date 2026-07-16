@@ -1,4 +1,4 @@
-# Arist Portfolio (BALYAOKO)
+# Arist Portfolio (Levi Zigza)
 
 Vite + TypeScript prairie-cosmos portfolio. Opening VO prefers pre-rendered neural clips under `public/audio/vo/`, with optional `/api/tts` cache on the Express host, then deep Web Speech as last resort. Intro score is procedural Web Audio.
 
@@ -54,7 +54,7 @@ After hyperspace, monologue lines play in order. Origin 8-bit visuals follow eac
 
 ## Intro audio (procedural)
 
-- **Gate bed** — soft space ambient on the BALYAOKO screen
+- **Gate bed** — soft space ambient on the Levi Zigza screen
 - **Journey score** (after Enter) — synth pads under the VO
 - **SFX** — planet whoosh / dream-heat crackle
 

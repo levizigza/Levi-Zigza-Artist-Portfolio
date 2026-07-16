@@ -333,7 +333,7 @@ async function main() {
   })
 
   app.listen(PORT, () => {
-    console.log(`BALYAOKO API listening on http://localhost:${PORT}`)
+    console.log(`Levi Zigza API listening on http://localhost:${PORT}`)
     if (!ADMIN_PASSWORD) {
       console.warn('WARNING: ADMIN_PASSWORD is unset — login will return 503.')
     }

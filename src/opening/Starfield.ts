@@ -119,7 +119,7 @@ const CONSTELLATION_BLUEPRINTS: {
   },
   {
     // Artist zig — Z path with trailing sparks
-    name: "Balyaoko's Path",
+    name: "Zigza's Path",
     points: [
       [-0.5, -0.35],
       [0.45, -0.35],
