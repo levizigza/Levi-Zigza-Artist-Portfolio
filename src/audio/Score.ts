@@ -3,8 +3,9 @@
  * gate: soft futuristic space ambient (Sagan awe — quiet pads, star dust)
  * journey (post-Enter origin): synth / space sci-fi underscore under cowboy VO
  *   — pads, arps, soft pulse, shimmer (distinct from the soft gate bed)
- * site: cinematic desert ambient (Dune-like — deep drones, sparse brass stabs,
- *   wind hush, distant choir) — original procedural, not licensed stems
+ * site: cinematic orchestral adventure underscore (Star Trek / Star Wars–esque
+ *   grandeur — noble brass swells, string pads, soft timpani pulse, occasional
+ *   fanfare intervals). Original procedural — not franchise themes/melodies.
  * SFX: planet whoosh + sun heat crackle (via Sfx, muted with the score)
  */
 
@@ -54,6 +55,13 @@ export class Score {
   private droneGains: GainNode[] = []
   private windGain: GainNode | null = null
   private brassBus: GainNode | null = null
+  /** Site-only orchestral adventure layers (silent during gate / journey). */
+  private siteBus: GainNode | null = null
+  private siteStringGains: GainNode[] = []
+  private siteBrassPadGains: GainNode[] = []
+  private timpaniGain: GainNode | null = null
+  private fanfareInterval = 0
+  private swellPhraseInterval = 0
   /** Chamber media (Walkman / film) holding exclusive audio focus. */
   private exclusiveMedia = false
   private exclusiveDepth = 0
@@ -153,17 +161,16 @@ export class Score {
     this.addDrone(82.41, 0.055, 'sine') // E2
     this.addDrone(110, 0.048, 'triangle') // A2
     this.addDrone(164.81, 0.028, 'sine') // E3
-    // Extra low site weight — Dune-like desert floor (quiet until site retune)
-    this.addDrone(36.71, 0.02, 'sine') // D1
-    this.addDrone(41.2, 0.016, 'triangle') // E1
+    // Soft low bed — quiet until site retune lifts into orchestral floor
+    this.addDrone(48.99, 0.014, 'sine') // G1
+    this.addDrone(73.42, 0.012, 'triangle') // D2
 
     this.addNoisePad()
     this.addSoftPulse()
     this.addChoirPad()
     this.addHighShimmer()
     this.addSciFiJourneyLayers()
-    this.addDesertWind()
-    this.addBrassBus()
+    this.addSiteOrchestralBus()
     this.addSwellBus()
     this.addAumBus()
     this.addGateSpaceBed()
@@ -216,62 +223,166 @@ export class Score {
     this.filterTargets.push(filter)
   }
 
-  /** Soft desert wind hush — filtered noise bed for site chambers. */
-  private addDesertWind(): void {
+  /**
+   * Site chamber orchestral adventure bed — string pads, soft brass warmth,
+   * timpani pulse, fanfare bus. Gains stay near silence until fadeToUnderscore.
+   * Original procedural harmony (C major / open fifths / heroics) — not franchise cues.
+   */
+  private addSiteOrchestralBus(): void {
     const dest = this.mysticDest()
     if (!this.ctx || !dest) return
+
+    const bus = this.ctx.createGain()
+    bus.gain.value = 0.0001
+    this.siteBus = bus
+    bus.connect(dest)
+    this.nodes.push(bus)
+
+    // Lush string pads — warm midrange, slow bow-like motion
+    const strings: { f: number; g: number; cut: number }[] = [
+      { f: 130.81, g: 0.055, cut: 920 }, // C3
+      { f: 164.81, g: 0.048, cut: 1100 }, // E3
+      { f: 196.0, g: 0.042, cut: 1280 }, // G3
+      { f: 261.63, g: 0.032, cut: 1600 }, // C4
+      { f: 329.63, g: 0.022, cut: 1900 }, // E4
+    ]
+    for (const s of strings) {
+      const osc = this.ctx.createOscillator()
+      osc.type = 'sawtooth'
+      osc.frequency.value = s.f
+      const detune = this.ctx.createOscillator()
+      detune.type = 'triangle'
+      detune.frequency.value = s.f * 1.004
+
+      const merge = this.ctx.createGain()
+      merge.gain.value = 0.5
+      const g = this.ctx.createGain()
+      g.gain.value = s.g
+      this.siteStringGains.push(g)
+
+      const filter = this.ctx.createBiquadFilter()
+      filter.type = 'lowpass'
+      filter.frequency.value = s.cut
+      filter.Q.value = 0.35
+
+      const lfo = this.ctx.createOscillator()
+      lfo.frequency.value = 0.04 + Math.random() * 0.03
+      const lfoGain = this.ctx.createGain()
+      lfoGain.gain.value = s.g * 0.22
+      lfo.connect(lfoGain)
+      lfoGain.connect(g.gain)
+
+      const fLfo = this.ctx.createOscillator()
+      fLfo.frequency.value = 0.02 + Math.random() * 0.02
+      const fGain = this.ctx.createGain()
+      fGain.gain.value = s.cut * 0.14
+      fLfo.connect(fGain)
+      fGain.connect(filter.frequency)
+
+      osc.connect(merge)
+      detune.connect(merge)
+      merge.connect(filter)
+      filter.connect(g)
+      g.connect(bus)
+      osc.start()
+      detune.start()
+      lfo.start()
+      fLfo.start()
+      this.nodes.push(osc, detune, merge, g, filter, lfoGain, fGain)
+      this.lfos.push(lfo, fLfo)
+    }
+
+    // Soft sustained brass warmth — noble mid pads (not stabs)
+    const brassPads: { f: number; g: number }[] = [
+      { f: 130.81, g: 0.028 },
+      { f: 196.0, g: 0.022 },
+      { f: 261.63, g: 0.016 },
+    ]
+    for (const b of brassPads) {
+      const osc = this.ctx.createOscillator()
+      osc.type = 'sawtooth'
+      osc.frequency.value = b.f
+      const g = this.ctx.createGain()
+      g.gain.value = b.g
+      this.siteBrassPadGains.push(g)
+      const filter = this.ctx.createBiquadFilter()
+      filter.type = 'bandpass'
+      filter.frequency.value = 680
+      filter.Q.value = 0.85
+      const lfo = this.ctx.createOscillator()
+      lfo.frequency.value = 0.035 + Math.random() * 0.025
+      const lfoGain = this.ctx.createGain()
+      lfoGain.gain.value = b.g * 0.3
+      lfo.connect(lfoGain)
+      lfoGain.connect(g.gain)
+      osc.connect(filter)
+      filter.connect(g)
+      g.connect(bus)
+      osc.start()
+      lfo.start()
+      this.nodes.push(osc, g, filter, lfoGain)
+      this.lfos.push(lfo)
+    }
+
+    // Soft timpani / heartbeat pulse — measured adventure pulse
+    const timp = this.ctx.createOscillator()
+    timp.type = 'sine'
+    timp.frequency.value = 55
+    const tg = this.ctx.createGain()
+    tg.gain.value = 0.0001
+    this.timpaniGain = tg
+    const tFilter = this.ctx.createBiquadFilter()
+    tFilter.type = 'lowpass'
+    tFilter.frequency.value = 140
+    tFilter.Q.value = 1.2
+    const tLfo = this.ctx.createOscillator()
+    tLfo.type = 'sine'
+    tLfo.frequency.value = 0.42
+    const tLfoG = this.ctx.createGain()
+    tLfoG.gain.value = 0.014
+    tLfo.connect(tLfoG)
+    tLfoG.connect(tg.gain)
+    timp.connect(tFilter)
+    tFilter.connect(tg)
+    tg.connect(bus)
+    timp.start()
+    tLfo.start()
+    this.nodes.push(timp, tg, tFilter, tLfoG)
+    this.lfos.push(tLfo)
+
+    // Quiet space hush — airy high bed (replaces desert wind)
     const bufLen = 2 * this.ctx.sampleRate
     const buffer = this.ctx.createBuffer(1, bufLen, this.ctx.sampleRate)
     const data = buffer.getChannelData(0)
-    let last = 0
     for (let i = 0; i < bufLen; i++) {
-      // Brown-ish noise — dry wind rather than white hiss
-      const white = Math.random() * 2 - 1
-      last = (last + 0.02 * white) / 1.02
-      data[i] = last * 3.5
+      data[i] = (Math.random() * 2 - 1) * 0.04
     }
     const noise = this.ctx.createBufferSource()
     noise.buffer = buffer
     noise.loop = true
-
     const hp = this.ctx.createBiquadFilter()
     hp.type = 'highpass'
-    hp.frequency.value = 180
+    hp.frequency.value = 400
     const bp = this.ctx.createBiquadFilter()
     bp.type = 'bandpass'
-    bp.frequency.value = 620
-    bp.Q.value = 0.55
-
-    const g = this.ctx.createGain()
-    g.gain.value = 0.0001
-    this.windGain = g
-
-    const lfo = this.ctx.createOscillator()
-    lfo.frequency.value = 0.07
-    const lfoGain = this.ctx.createGain()
-    lfoGain.gain.value = 0.004
-    lfo.connect(lfoGain)
-    lfoGain.connect(g.gain)
-
+    bp.frequency.value = 2400
+    bp.Q.value = 0.4
+    const wg = this.ctx.createGain()
+    wg.gain.value = 0.0001
+    this.windGain = wg
     noise.connect(hp)
     hp.connect(bp)
-    bp.connect(g)
-    g.connect(dest)
+    bp.connect(wg)
+    wg.connect(bus)
     noise.start()
-    lfo.start()
-    this.nodes.push(noise, hp, bp, g, lfoGain)
-    this.lfos.push(lfo)
-  }
+    this.nodes.push(noise, hp, bp, wg)
 
-  /** Quiet bus for sparse brass-like stabs (site mode only). */
-  private addBrassBus(): void {
-    const dest = this.mysticDest()
-    if (!this.ctx || !dest) return
-    const bus = this.ctx.createGain()
-    bus.gain.value = 1
-    this.brassBus = bus
-    bus.connect(dest)
-    this.nodes.push(bus)
+    // Fanfare / brass-swell phrase bus
+    const brass = this.ctx.createGain()
+    brass.gain.value = 1
+    this.brassBus = brass
+    brass.connect(bus)
+    this.nodes.push(brass)
   }
 
   private addNoisePad(): void {
@@ -1019,26 +1130,28 @@ export class Score {
       clearInterval(this.arpInterval)
       this.arpInterval = 0
     }
-    this.clearSiteBrass()
+    this.clearSiteOrchestral()
   }
 
   /**
-   * Sparse brass-like synth stab — saw/triangle stack with short envelope.
-   * Homage texture only; not a licensed Dune / Zimmer cue.
+   * Noble brass swell — sustained partial stack with slow attack/release.
+   * Heroic open intervals only; not a franchise fanfare melody.
    */
-  private scheduleBrassStab(): void {
+  private scheduleBrassSwell(): void {
     if (!this.ctx || !this.brassBus || this.mode !== 'site' || this.exclusiveMedia) return
     const now = this.ctx.currentTime
-    // Open fifths / dark modes — desert fanfare fragments
-    const roots = [55, 65.41, 73.42, 82.41, 98]
+    const roots = [130.81, 146.83, 164.81, 174.61, 196.0] // C3–G3
     const root = roots[Math.floor(Math.random() * roots.length)]!
+    // Major triad + open fifth color
     const partials: { mul: number; type: OscillatorType; g: number }[] = [
-      { mul: 1, type: 'sawtooth', g: 0.55 },
-      { mul: 1.5, type: 'triangle', g: 0.28 },
-      { mul: 2, type: 'sawtooth', g: 0.12 },
+      { mul: 1, type: 'sawtooth', g: 0.5 },
+      { mul: 1.25, type: 'triangle', g: 0.32 }, // major third
+      { mul: 1.5, type: 'sawtooth', g: 0.28 }, // perfect fifth
+      { mul: 2, type: 'triangle', g: 0.14 },
     ]
-    const dur = 1.8 + Math.random() * 1.4
-    const peak = 0.045 + Math.random() * 0.02
+    const dur = 3.2 + Math.random() * 2.4
+    const peak = 0.055 + Math.random() * 0.025
+    const attack = 0.55 + Math.random() * 0.45
 
     for (const p of partials) {
       const osc = this.ctx.createOscillator()
@@ -1046,12 +1159,14 @@ export class Score {
       osc.frequency.value = root * p.mul
       const filter = this.ctx.createBiquadFilter()
       filter.type = 'lowpass'
-      filter.frequency.setValueAtTime(480, now)
-      filter.frequency.exponentialRampToValueAtTime(220, now + dur * 0.85)
-      filter.Q.value = 1.1
+      filter.frequency.setValueAtTime(720, now)
+      filter.frequency.linearRampToValueAtTime(1100, now + attack)
+      filter.frequency.exponentialRampToValueAtTime(480, now + dur * 0.9)
+      filter.Q.value = 0.7
       const g = this.ctx.createGain()
       g.gain.setValueAtTime(0.0001, now)
-      g.gain.exponentialRampToValueAtTime(peak * p.g, now + 0.08)
+      g.gain.linearRampToValueAtTime(peak * p.g, now + attack)
+      g.gain.linearRampToValueAtTime(peak * p.g * 0.65, now + dur * 0.55)
       g.gain.exponentialRampToValueAtTime(0.0001, now + dur)
       osc.connect(filter)
       filter.connect(g)
@@ -1061,19 +1176,112 @@ export class Score {
     }
   }
 
-  private ensureSiteBrass(): void {
-    if (this.brassInterval) return
-    this.brassInterval = window.setInterval(() => {
-      if (this.mode === 'site' && !this.exclusiveMedia && Math.random() > 0.42) {
-        this.scheduleBrassStab()
+  /**
+   * Occasional short fanfare-like interval — ascending perfect 4th / 5th pairs.
+   * Sparse punctuation; deliberately avoids franchise leitmotif contours.
+   */
+  private scheduleFanfareInterval(): void {
+    if (!this.ctx || !this.brassBus || this.mode !== 'site' || this.exclusiveMedia) return
+    const ctx = this.ctx
+    const bus = this.brassBus
+    const now = ctx.currentTime
+    const pairs: [number, number][] = [
+      [196.0, 261.63], // G3 → C4 (P4)
+      [174.61, 261.63], // F3 → C4 (P5)
+      [220.0, 329.63], // A3 → E4 (P5)
+      [146.83, 220.0], // D3 → A3 (P5)
+      [261.63, 349.23], // C4 → F4 (P4)
+    ]
+    const pair = pairs[Math.floor(Math.random() * pairs.length)]!
+    const step = 0.38 + Math.random() * 0.12
+    const peak = 0.042 + Math.random() * 0.016
+
+    pair.forEach((freq, i) => {
+      const t0 = now + i * step
+      for (const mul of [1, 2]) {
+        const osc = ctx.createOscillator()
+        osc.type = mul === 1 ? 'sawtooth' : 'triangle'
+        osc.frequency.value = freq * mul
+        const filter = ctx.createBiquadFilter()
+        filter.type = 'lowpass'
+        filter.frequency.value = 1400
+        filter.Q.value = 0.6
+        const g = ctx.createGain()
+        const amp = peak * (mul === 1 ? 1 : 0.35)
+        g.gain.setValueAtTime(0.0001, t0)
+        g.gain.linearRampToValueAtTime(amp, t0 + 0.06)
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.85)
+        osc.connect(filter)
+        filter.connect(g)
+        g.connect(bus)
+        osc.start(t0)
+        osc.stop(t0 + 0.9)
       }
-    }, 9200)
+    })
   }
 
-  private clearSiteBrass(): void {
+  private ensureSiteOrchestral(): void {
+    if (!this.brassInterval) {
+      this.brassInterval = window.setInterval(() => {
+        if (this.mode === 'site' && !this.exclusiveMedia && Math.random() > 0.35) {
+          this.scheduleBrassSwell()
+        }
+      }, 11000)
+    }
+    if (!this.fanfareInterval) {
+      this.fanfareInterval = window.setInterval(() => {
+        if (this.mode === 'site' && !this.exclusiveMedia && Math.random() > 0.5) {
+          this.scheduleFanfareInterval()
+        }
+      }, 14000)
+    }
+    if (!this.swellPhraseInterval) {
+      this.swellPhraseInterval = window.setInterval(() => {
+        if (this.mode === 'site' && !this.exclusiveMedia && Math.random() > 0.55) {
+          this.scheduleStringLift()
+        }
+      }, 16000)
+    }
+  }
+
+  /** Soft ascending string chord lift — cinematic breath under the brass. */
+  private scheduleStringLift(): void {
+    if (!this.ctx || !this.siteBus || this.mode !== 'site' || this.exclusiveMedia) return
+    const now = this.ctx.currentTime
+    const chord = [261.63, 329.63, 392.0, 523.25] // C major
+    const dur = 4.5 + Math.random() * 2
+    for (const freq of chord) {
+      const osc = this.ctx.createOscillator()
+      osc.type = 'triangle'
+      osc.frequency.value = freq
+      const filter = this.ctx.createBiquadFilter()
+      filter.type = 'lowpass'
+      filter.frequency.value = 1800
+      const g = this.ctx.createGain()
+      g.gain.setValueAtTime(0.0001, now)
+      g.gain.linearRampToValueAtTime(0.018, now + 1.4)
+      g.gain.linearRampToValueAtTime(0.012, now + dur * 0.55)
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur)
+      osc.connect(filter)
+      filter.connect(g)
+      g.connect(this.siteBus)
+      osc.start(now)
+      osc.stop(now + dur + 0.05)
+    }
+  }
+
+  private clearSiteOrchestral(): void {
     if (this.brassInterval) {
       clearInterval(this.brassInterval)
       this.brassInterval = 0
+    }
+    if (this.fanfareInterval) {
+      clearInterval(this.fanfareInterval)
+      this.fanfareInterval = 0
+    }
+    if (this.swellPhraseInterval) {
+      clearInterval(this.swellPhraseInterval)
+      this.swellPhraseInterval = 0
     }
   }
 
@@ -1143,10 +1351,7 @@ export class Score {
       this.exclusiveMedia = false
       this.setAum(0)
       this.setSunHeat(0)
-      if (this.windGain) {
-        const t = this.ctx.currentTime
-        this.windGain.gain.setTargetAtTime(0.0001, t, 0.35)
-      }
+      this.muteSiteOrchestral(0.35)
     } else if (this.mode === 'gate' && this.gateBedLive) {
       return true
     }
@@ -1190,7 +1395,7 @@ export class Score {
     this.mode = 'journey'
     this.started = true
     this.clearGatePings()
-    this.clearSiteBrass()
+    this.clearSiteOrchestral()
     this.exclusiveDepth = 0
     this.exclusiveMedia = false
     this.applyMuteGain(0.05)
@@ -1219,17 +1424,15 @@ export class Score {
     }, fromGate ? 9000 : 7000)
   }
 
-  /** Restore journey-default pad mix after a site (desert) retune. */
+  /** Restore journey-default pad mix after a site (orchestral) retune. */
   private resetJourneyLayerMix(): void {
     if (!this.ctx) return
     const now = this.ctx.currentTime
-    const droneBase = [0.08, 0.055, 0.048, 0.028, 0.02, 0.016]
+    const droneBase = [0.08, 0.055, 0.048, 0.028, 0.014, 0.012]
     this.droneGains.forEach((g, i) => {
       g.gain.setTargetAtTime(droneBase[i] ?? 0.03, now, 0.8)
     })
-    if (this.windGain) {
-      this.windGain.gain.setTargetAtTime(0.0001, now, 0.4)
-    }
+    this.muteSiteOrchestral(0.4)
     for (const sg of this.sciFiPadGains) {
       sg.gain.setTargetAtTime(0.028, now, 0.9)
     }
@@ -1241,6 +1444,21 @@ export class Score {
     }
     if (this.pulseGain) {
       this.pulseGain.gain.setTargetAtTime(0.014, now, 0.8)
+    }
+  }
+
+  /** Silence site orchestral bus + related gains (gate / journey / fade-out). */
+  private muteSiteOrchestral(tau = 0.4): void {
+    if (!this.ctx) return
+    const now = this.ctx.currentTime
+    if (this.siteBus) {
+      this.siteBus.gain.setTargetAtTime(0.0001, now, tau)
+    }
+    if (this.windGain) {
+      this.windGain.gain.setTargetAtTime(0.0001, now, tau)
+    }
+    if (this.timpaniGain) {
+      this.timpaniGain.gain.setTargetAtTime(0.0001, now, tau)
     }
   }
 
@@ -1282,7 +1500,7 @@ export class Score {
     const now = this.ctx.currentTime
     const fade = Math.max(0.6, seconds)
 
-    // Soft cinematic rise into desert chamber score
+    // Cinematic rise into orchestral chamber score
     this.master.gain.cancelScheduledValues(now)
     this.master.gain.setValueAtTime(Math.max(0.0001, this.master.gain.value), now)
     this.master.gain.linearRampToValueAtTime(SITE_MASTER_GAIN, now + fade)
@@ -1292,69 +1510,100 @@ export class Score {
     this.mysticBus.gain.cancelScheduledValues(now)
     this.mysticBus.gain.setTargetAtTime(1, now, 0.55)
 
-    // Deep drones up; journey sci-fi color down — Dune-like floor
-    const dronePeaks = [0.11, 0.085, 0.055, 0.032, 0.048, 0.038]
+    // Soft foundation; journey sci-fi color down — orchestral adventure floor
+    const dronePeaks = [0.055, 0.042, 0.035, 0.022, 0.028, 0.024]
     this.droneGains.forEach((g, i) => {
-      g.gain.setTargetAtTime(dronePeaks[i] ?? 0.04, now, 1.2)
+      g.gain.setTargetAtTime(dronePeaks[i] ?? 0.03, now, 1.2)
     })
     for (const f of this.filterTargets) {
-      f.frequency.setTargetAtTime(260, now, 1.6)
+      f.frequency.setTargetAtTime(520, now, 1.6)
     }
     if (this.pulseGain) {
-      this.pulseGain.gain.setTargetAtTime(0.011, now, 1.4)
+      // Journey pulse quiet — timpani on siteBus carries the pulse
+      this.pulseGain.gain.setTargetAtTime(0.004, now, 1.4)
     }
     for (const cg of this.choirGains) {
-      cg.gain.setTargetAtTime(0.014, now, 1.5)
+      cg.gain.setTargetAtTime(0.01, now, 1.5)
     }
     for (const sg of this.sciFiPadGains) {
-      sg.gain.setTargetAtTime(0.006, now, 1.6)
+      sg.gain.setTargetAtTime(0.004, now, 1.6)
     }
     for (const sh of this.shimmerGains) {
-      sh.gain.setTargetAtTime(0.0008, now, 1.5)
-    }
-    if (this.windGain) {
-      this.windGain.gain.setTargetAtTime(0.018, now, 1.8)
+      sh.gain.setTargetAtTime(0.0012, now, 1.5)
     }
 
-    this.ensureSiteBrass()
+    // Bring up dedicated site orchestral bus
+    if (this.siteBus) {
+      this.siteBus.gain.cancelScheduledValues(now)
+      this.siteBus.gain.setValueAtTime(Math.max(0.0001, this.siteBus.gain.value), now)
+      this.siteBus.gain.linearRampToValueAtTime(1, now + fade * 0.85)
+    }
+    if (this.timpaniGain) {
+      this.timpaniGain.gain.setTargetAtTime(0.018, now, 1.2)
+    }
+    if (this.windGain) {
+      this.windGain.gain.setTargetAtTime(0.008, now, 1.8)
+    }
+    for (const sg of this.siteStringGains) {
+      sg.gain.setTargetAtTime(0.045, now, 1.3)
+    }
+    for (const bg of this.siteBrassPadGains) {
+      bg.gain.setTargetAtTime(0.024, now, 1.4)
+    }
+
+    this.ensureSiteOrchestral()
     window.setTimeout(() => {
-      if (this.mode === 'site' && !this.exclusiveMedia) this.scheduleBrassStab()
-    }, Math.round(fade * 1000) + 2200)
+      if (this.mode === 'site' && !this.exclusiveMedia) this.scheduleBrassSwell()
+    }, Math.round(fade * 1000) + 1800)
+    window.setTimeout(() => {
+      if (this.mode === 'site' && !this.exclusiveMedia) this.scheduleFanfareInterval()
+    }, Math.round(fade * 1000) + 5200)
   }
 
   setChamberAmbience(page: string): void {
     if (!this.ctx || !this.started || this.mode !== 'site') return
     const now = this.ctx.currentTime
     const filterByPage: Record<string, number> = {
-      home: 280,
-      video: 340,
-      music: 400,
-      scripts: 240,
-      photography: 310,
+      home: 560,
+      video: 680,
+      music: 780,
+      scripts: 480,
+      photography: 620,
     }
-    const pulseByPage: Record<string, number> = {
-      home: 0.01,
-      video: 0.012,
-      music: 0.014,
-      scripts: 0.008,
-      photography: 0.011,
-    }
-    const windByPage: Record<string, number> = {
+    const timpaniByPage: Record<string, number> = {
       home: 0.016,
-      video: 0.012,
-      music: 0.01,
-      scripts: 0.02,
-      photography: 0.022,
+      video: 0.02,
+      music: 0.022,
+      scripts: 0.012,
+      photography: 0.015,
     }
-    const fq = filterByPage[page] ?? 280
+    const hushByPage: Record<string, number> = {
+      home: 0.007,
+      video: 0.006,
+      music: 0.005,
+      scripts: 0.009,
+      photography: 0.01,
+    }
+    const stringMul: Record<string, number> = {
+      home: 1,
+      video: 1.08,
+      music: 1.15,
+      scripts: 0.9,
+      photography: 1.05,
+    }
+    const fq = filterByPage[page] ?? 560
     for (const f of this.filterTargets) {
       f.frequency.setTargetAtTime(fq, now, 1.2)
     }
-    if (this.pulseGain) {
-      this.pulseGain.gain.setTargetAtTime(pulseByPage[page] ?? 0.01, now, 1.0)
+    if (this.timpaniGain && !this.exclusiveMedia) {
+      this.timpaniGain.gain.setTargetAtTime(timpaniByPage[page] ?? 0.016, now, 1.0)
     }
     if (this.windGain && !this.exclusiveMedia) {
-      this.windGain.gain.setTargetAtTime(windByPage[page] ?? 0.016, now, 1.4)
+      this.windGain.gain.setTargetAtTime(hushByPage[page] ?? 0.007, now, 1.4)
+    }
+    const mul = stringMul[page] ?? 1
+    for (const sg of this.siteStringGains) {
+      sg.gain.setTargetAtTime(0.045 * mul, now, 1.2)
     }
   }
 
@@ -1446,10 +1695,7 @@ export class Score {
     this.clearExclusiveMedia()
     this.setAum(0)
     this.setSunHeat(0)
-    if (this.windGain) {
-      const t = this.ctx.currentTime
-      this.windGain.gain.setTargetAtTime(0.0001, t, 0.3)
-    }
+    this.muteSiteOrchestral(0.3)
     const now = this.ctx.currentTime
     this.master.gain.cancelScheduledValues(now)
     this.master.gain.setValueAtTime(Math.max(0.0001, this.master.gain.value), now)
