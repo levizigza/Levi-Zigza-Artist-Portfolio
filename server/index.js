@@ -147,6 +147,57 @@ async function main() {
     res.json(manifest)
   })
 
+  const ttsLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'TTS rate limit exceeded.' },
+  })
+
+  /**
+   * Neural TTS for opening VO (dev / Node host).
+   * Prefer shipping baked public/audio/vo/line-XX.mp3 for GitHub Pages.
+   * Body: { text, index?, voice? } → caches MP3 under public/audio/vo/.
+   */
+  app.post('/api/tts', ttsLimiter, async (req, res) => {
+    try {
+      const text = String(req.body?.text ?? '').trim().slice(0, 500)
+      if (!text) {
+        res.status(400).json({ error: 'Missing text' })
+        return
+      }
+      const { synthesizeToFile, lineFileName, cacheNameForText } = await import('./tts.js')
+      const voDir = path.join(ROOT, 'public', 'audio', 'vo')
+      await fs.mkdir(voDir, { recursive: true })
+
+      const idx = Number.isFinite(Number(req.body?.index)) ? Number(req.body.index) : -1
+      const file =
+        idx >= 0 && idx < 64 ? lineFileName(idx) : cacheNameForText(text)
+      const abs = path.join(voDir, file)
+
+      try {
+        const st = await fs.stat(abs)
+        if (st.size > 500) {
+          res.json({ url: `/audio/vo/${file}`, cached: true })
+          return
+        }
+      } catch {
+        /* synthesize */
+      }
+
+      const voice = req.body?.voice ? String(req.body.voice) : undefined
+      await synthesizeToFile(text, { outPath: abs, voice })
+      res.json({ url: `/audio/vo/${file}`, cached: false })
+    } catch (err) {
+      console.error('[tts]', err?.message || err)
+      res.status(503).json({
+        error: 'TTS unavailable',
+        detail: String(err?.message || err).slice(0, 200),
+      })
+    }
+  })
+
   app.post(
     '/api/upload',
     requireAuth,

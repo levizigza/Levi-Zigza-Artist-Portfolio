@@ -13,23 +13,31 @@ export type OriginDrawState = {
   height: number
   /** How strongly origin layer owns the frame (0 = gone, 1 = full) */
   alpha: number
+  /** Current monologue cue index while VO-driven (undefined = time-only). */
+  cueIndex?: number
+  /** 0–1 progress within the current cue line. */
+  cueU?: number
 }
 
-/** Absolute journey progress windows for the origin arc */
+/**
+ * Absolute journey progress windows for the origin arc.
+ * Local thresholds (÷ bloomEnd) align with MONOLOGUE `visual` windows so
+ * sleeper → dream → civs → alchemy → seed → counsel track the VO.
+ */
 export const ORIGIN = {
-  voidHold: 0.02,
+  voidHold: 0.012,
   /** Monster drifts, eyelids heavy */
-  sleeperEnd: 0.11,
+  sleeperEnd: 0.081,
   /** Fully asleep — dream threshold */
-  sleepEnd: 0.17,
+  sleepEnd: 0.124,
   /** Dream blooms into cosmos */
-  dreamEnd: 0.27,
+  dreamEnd: 0.236,
   /** Varied civilizations tableau */
-  civsEnd: 0.35,
+  civsEnd: 0.298,
   /** Boy walks barren field; alchemist plants → tall tree */
-  alchemyEnd: 0.43,
+  alchemyEnd: 0.397,
   /** Boy’s idea-bubble → catch → plant sapling */
-  seedEnd: 0.51,
+  seedEnd: 0.496,
   /** Counsel + shade under the tall tree */
   bloomEnd: 0.62,
   done: 0.66,
@@ -243,7 +251,7 @@ export class OriginStory {
     this.drawSleeperMonster(c, w, h, t, time)
     this.drawSleepWaves(c, w, h, t, time)
     this.drawCivilizations(c, w, h, t, time)
-    this.drawBoyParable(c, w, h, t, time)
+    this.drawBoyParable(c, w, h, t, time, s.cueIndex, s.cueU)
     this.drawRipples(c, w, h)
     this.drawEmbers(c, w, h)
     this.drawSparks(c, w, h)
@@ -904,6 +912,8 @@ export class OriginStory {
     h: number,
     t: number,
     time: number,
+    sCue?: number,
+    sCueU?: number,
   ): void {
     const civs = ORIGIN.civsEnd / ORIGIN.bloomEnd
     const alchemy = ORIGIN.alchemyEnd / ORIGIN.bloomEnd
@@ -915,13 +925,43 @@ export class OriginStory {
     const walk = this.phase(t, civs, civs + (alchemy - civs) * 0.35)
     const plantAlchemy = this.phase(t, civs + (alchemy - civs) * 0.3, alchemy)
     const tallGrow = this.phase(t, civs + (alchemy - civs) * 0.55, alchemy)
-    const bubble = this.phase(t, alchemy, alchemy + (seed - alchemy) * 0.45)
-    const catchSeed = this.phase(
+
+    // Default time-based seed arc; VO cue index overrides beat-for-beat.
+    let bubble = this.phase(t, alchemy, alchemy + (seed - alchemy) * 0.4)
+    let catchSeed = this.phase(
       t,
-      alchemy + (seed - alchemy) * 0.35,
-      alchemy + (seed - alchemy) * 0.65,
+      alchemy + (seed - alchemy) * 0.32,
+      alchemy + (seed - alchemy) * 0.62,
     )
-    const plantBoy = this.phase(t, alchemy + (seed - alchemy) * 0.55, seed)
+    let plantBoy = this.phase(t, alchemy + (seed - alchemy) * 0.55, seed)
+    let saplingGrow = Math.max(0, (plantBoy - 0.35) / 0.65)
+
+    const cue = typeof sCue === 'number' ? sCue : -1
+    const cueU = Math.max(0, Math.min(1, sCueU ?? 0))
+    if (cue === 8) {
+      // “seed rose… bubble. He caught it.”
+      bubble = Math.min(1, cueU / 0.52)
+      catchSeed = Math.max(0, Math.min(1, (cueU - 0.42) / 0.55))
+      plantBoy = 0
+      saplingGrow = 0
+    } else if (cue === 9) {
+      // “set it in the dirt… sapling come up”
+      bubble = 1
+      catchSeed = 1
+      plantBoy = Math.min(1, cueU / 0.4 + 0.15)
+      saplingGrow = Math.max(0, Math.min(1, (cueU - 0.28) / 0.72))
+    } else if (cue > 9) {
+      bubble = 1
+      catchSeed = 1
+      plantBoy = 1
+      saplingGrow = 1
+    } else if (cue >= 0 && cue < 8) {
+      bubble = 0
+      catchSeed = 0
+      plantBoy = 0
+      saplingGrow = 0
+    }
+
     const counsel = this.phase(t, seed, 1)
     const shade = this.phase(t, seed + (1 - seed) * 0.25, 1)
     const vision = this.phase(t, seed + (1 - seed) * 0.45, seed + (1 - seed) * 0.85)
@@ -1017,11 +1057,11 @@ export class OriginStory {
       }
     }
 
-    // Boy’s sapling after plant
-    const sapGrow = Math.max(0, plantBoy * 0.85 + counsel * 0.15)
-    if (sapGrow > 0.08) {
-      const sapH = Math.min(w, h) * 0.07 * sapGrow
-      this.drawTree(ctx, sapX, groundY, Math.max(4, sapH), 1, 0.2, 0, time)
+    // Boy’s sapling — visible growth after plant (driven by saplingGrow)
+    if (saplingGrow > 0.04 || plantBoy > 0.55) {
+      const grow = Math.max(saplingGrow, Math.max(0, plantBoy - 0.4) / 0.6)
+      const sapH = Math.min(w, h) * (0.04 + 0.11 * grow)
+      this.drawTree(ctx, sapX, groundY, Math.max(5, sapH), 1, 0.15 + grow * 0.35, 0, time)
       // Soft vision of his future mighty tree
       if (vision > 0.15) {
         ctx.save()
@@ -1042,53 +1082,57 @@ export class OriginStory {
 
     // Little boy sprite
     const catchPose = Math.max(0, catchSeed * (1 - plantBoy * 0.9))
-    const kneel = plantBoy > 0.35 && plantBoy < 0.95 ? plantBoy : sitShade ? 0.35 : 0
+    const kneel = plantBoy > 0.2 && plantBoy < 0.95 ? Math.min(1, plantBoy * 1.2) : sitShade ? 0.35 : 0
     this.drawBoySprite(ctx, boyX, boyY, unit, time, {
-      armReach: Math.max(bubble * 0.4, catchPose),
+      armReach: Math.max(bubble * 0.55, catchPose),
       kneel,
       sit: sitShade,
     })
 
-    // Idea seed bubble from boy’s head → catch → plant
-    if (bubble > 0.05 && plantBoy < 0.9) {
+    // Idea seed bubble from boy’s head → flows up → catch → plant
+    if (bubble > 0.04 && plantBoy < 0.85) {
       const headY = boyY - Math.floor(unit * (1.95 - kneel * 0.35))
       let sx: number
       let sy: number
-      if (catchSeed < 0.55) {
-        // rising like a bubble
-        const u = bubble
+      if (catchSeed < 0.45) {
+        // Rising bubble from crown — clear upward travel
+        const u = Math.min(1, bubble)
         const float = Math.sin(time * 3) * 1.5
-        sx = boyX + 3 + u * 4
-        sy = headY - 2 - u * unit * 1.1 + float
-        // bubble ring
-        this.strokePixelRing(ctx, sx, sy, 3 + u * 2, P.cyan, 1)
-        for (let i = 0; i < 5; i++) {
+        const rise = u * unit * 2.2
+        sx = boyX + 3 + u * 5
+        sy = headY - 2 - rise + float
+        this.strokePixelRing(ctx, sx, sy, 3 + u * 2.5, P.cyan, 1)
+        for (let i = 0; i < 6; i++) {
           const a = time * 2 + i
           if (this.ditherAt(i, Math.floor(time * 5), bubble * 0.55)) {
             this.px(
               ctx,
               Math.floor(boyX + 3 + Math.cos(a) * (2 + i)),
-              Math.floor(headY - Math.sin(a * 1.3) * (2 + i) - bubble * 5),
+              Math.floor(headY - Math.sin(a * 1.3) * (2 + i) - rise * 0.4),
               i % 2 === 0 ? P.amber : P.cream,
             )
           }
         }
-      } else if (plantBoy < 0.35) {
-        // caught in hands
+      } else if (plantBoy < 0.28) {
+        // Caught in hands
         sx = boyX + 7
         sy = boyY - Math.floor(unit * (1.15 - kneel * 0.2))
       } else {
-        // lowering into dirt near sapling spot
-        const u = (plantBoy - 0.35) / 0.55
-        sx = sapX
-        sy = boyY - Math.floor(unit * 0.9) + u * (groundY - (boyY - unit * 0.9) + 2)
+        // Lowering into dirt near sapling spot
+        const u = Math.min(1, (plantBoy - 0.28) / 0.5)
+        sx = Math.floor(boyX + 7 + (sapX - (boyX + 7)) * u)
+        sy = Math.floor(
+          boyY -
+            unit * (1.15 - kneel * 0.2) +
+            u * (groundY - (boyY - unit * (1.15 - kneel * 0.2)) + 2),
+        )
       }
       const pulse = 1 + Math.sin(time * 6) * 0.2
       this.fillDitherDisc(ctx, sx, sy, 2.8 * pulse, P.amber, 0.75)
       ctx.fillStyle = P.cream
       ctx.fillRect(Math.floor(sx) - 1, Math.floor(sy) - 1, 3, 3)
       this.px(ctx, Math.floor(sx), Math.floor(sy), P.green)
-      if (plantBoy > 0.55) {
+      if (plantBoy > 0.45) {
         ctx.fillStyle = P.umber
         ctx.fillRect(sapX - 3, groundY - 1, 6, 3)
         this.px(ctx, sapX, groundY - 2, P.moss)

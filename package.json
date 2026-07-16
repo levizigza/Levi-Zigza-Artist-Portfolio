@@ -10,9 +10,11 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "start": "node server/index.js",
-    "vo:manifest": "node scripts/print-vo-manifest.mjs"
+    "vo:manifest": "node scripts/print-vo-manifest.mjs",
+    "vo:bake": "node scripts/bake-vo.mjs"
   },
   "dependencies": {
+    "@bestcodes/edge-tts": "^3.0.1",
     "cookie-parser": "^1.4.7",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",

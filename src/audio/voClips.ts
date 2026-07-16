@@ -1,7 +1,7 @@
 /**
  * Pre-rendered cowboy VO clips for opening monologue lines.
  * Filenames match MONOLOGUE indices: public/audio/vo/line-00.mp3 …
- * Lore-injected / ad-hoc lines have no clip and fall back to Web Speech.
+ * Bake with: npm run vo:bake (Edge neural TTS, no visitor ML server).
  */
 
 import { MONOLOGUE } from '../content/monologue'

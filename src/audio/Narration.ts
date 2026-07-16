@@ -2,19 +2,17 @@
  * Opening narration — prairie-cosmos cowboy VO.
  *
  * Playback strategy:
- * 1) Prefer pre-rendered clips at /audio/vo/line-XX.mp3 (baked via VCClient /
- *    w-okada voice-changer offline — see README “Cowboy narration VO”)
- * 2) Fall back to Web Speech: aggressively rank deepest US male system voices,
- *    reject bright / female / novelty, speak at pitch ~0.5–0.68, rate ~0.7–0.78,
- *    with clause pauses for human drawl cadence.
+ * 1) Prefer pre-rendered clips at /audio/vo/line-XX.mp3 (Edge neural bake /
+ *    VCClient offline — see README)
+ * 2) Optional neural TTS via /api/tts (server caches under public/audio/vo/)
+ * 3) Fall back to Web Speech: deepest US male system voices, low pitch / slow rate
  *
- * Line queue: cues enqueue when progress crosses their `at` time; each line
- * plays to completion (clip `onended` / utterance `onend`) before the next
- * starts. Never cancels mid-line except Skip / stop / mute.
+ * Lines enqueue in monologue order on begin() (not progress-cued). Origin visuals
+ * follow getVisualLocalT() / getCueState() beat-for-beat with the spoken line.
  */
 
 import { MONOLOGUE, type MonologueCue } from '../content/monologue'
-import { fetchLoreSnippet } from '../content/loreApi'
+import { withBase } from '../content/withBase'
 import { voClipUrl, voClipUrlForText } from './voClips'
 
 export type { MonologueCue }
@@ -43,7 +41,7 @@ const COWBOY_PREFERRED: { re: RegExp; weight: number }[] = [
   { re: /microsoft ryan/i, weight: 44 },
   { re: /microsoft brian/i, weight: 42 },
   { re: /google us english male|en-us-x-iog|en-us-x-iom|en-us-x-tpd|en-us-x-gol/i, weight: 58 },
-  { re: /\bfred\b/i, weight: 55 }, // classic macOS gravelly
+  { re: /\bfred\b/i, weight: 55 },
   { re: /\bdavid\b/i, weight: 42 },
   { re: /\bmark\b/i, weight: 40 },
   { re: /\bguy\b/i, weight: 38 },
@@ -62,10 +60,15 @@ const LINE_GAP_MS = 720
 /** Soft pre-roll before the first syllable of a line. */
 const LINE_LEAD_MS = 380
 
+export type CueVisualState = {
+  cueIndex: number
+  cueU: number
+  localT: number
+}
+
 export class Narration {
   private speaking = false
   private cueIndex = 0
-  private lastProgress = -1
   private voice: SpeechSynthesisVoice | null = null
   private voiceScore = 0
   private textEl: HTMLElement | null
@@ -73,7 +76,6 @@ export class Narration {
   /** True only between begin() and stop/reset — blocks dive-progress cue spam. */
   private sessionActive = false
   private cues: MonologueCue[] = [...MONOLOGUE]
-  private loreInjected = false
   private showTimer = 0
   private clearTimer = 0
   private pauseTimer = 0
@@ -89,6 +91,9 @@ export class Narration {
   private clipOk = new Map<string, boolean>()
   private clipProbe: Promise<void> | null = null
   private clipAudio: HTMLAudioElement | null = null
+  /** Runtime neural TTS blob URLs keyed by monologue text. */
+  private ttsBlobUrl = new Map<string, string>()
+  private ttsApiOk: boolean | null = null
   /** Clause-queue index while speaking a deep drawl line. */
   private clauseChain = 0
   /** Lines waiting to play after the current utterance finishes. */
@@ -100,6 +105,11 @@ export class Narration {
   /** Bumped on stop/reset so async completions can't advance a dead session. */
   private generation = 0
   private onCompleteCb: (() => void) | null = null
+  /** Index of the cue currently speaking (−1 idle). */
+  private activeCueIndex = -1
+  private lineStartedAt = 0
+  private lineDurationMs = 4000
+  private visualLocalT = 0
 
   constructor(textEl?: HTMLElement | null) {
     this.textEl = textEl ?? null
@@ -120,13 +130,10 @@ export class Narration {
       }
       window.clearTimeout(this.pauseTimer)
       this.clauseChain = 0
-      // Keep lineActive; mute path advances via estimated timing so the story
-      // still completes every line (subtitles + queue) while silent.
       if (this.lineActive && this.activeLine) {
         this.scheduleMutedAdvance(this.activeLine)
       }
     } else if (this.lineActive && this.activeLine && !this.clipAudio) {
-      // Was advancing on mute timer — restart audible delivery for this line.
       window.clearTimeout(this.muteAdvanceTimer)
       void this.deliverLine(this.activeLine, this.generation)
     }
@@ -160,6 +167,36 @@ export class Narration {
     return this.lineActive || this.pending.length > 0 || this.gapTimer !== 0
   }
 
+  /**
+   * Origin localT (0–1) for the current VO beat.
+   * Drives OriginStory so animation matches narration, not wall-clock alone.
+   */
+  getVisualLocalT(): number {
+    if (!this.sessionActive) return this.visualLocalT
+    if (this.finishedAll) return Math.max(this.visualLocalT, 0.98)
+    if (this.activeCueIndex < 0) {
+      return this.visualLocalT
+    }
+    const cue = this.cues[this.activeCueIndex]
+    if (!cue) return this.visualLocalT
+    const [a, b] = cue.visual
+    const elapsed = Math.max(0, performance.now() - this.lineStartedAt)
+    const u = Math.max(0, Math.min(1, elapsed / Math.max(800, this.lineDurationMs)))
+    this.visualLocalT = a + (b - a) * u
+    return this.visualLocalT
+  }
+
+  /** Cue index + within-line progress for beat-locked parable stages. */
+  getCueState(): CueVisualState {
+    const localT = this.getVisualLocalT()
+    if (this.activeCueIndex < 0) {
+      return { cueIndex: this.finishedAll ? this.cues.length - 1 : -1, cueU: 1, localT }
+    }
+    const elapsed = Math.max(0, performance.now() - this.lineStartedAt)
+    const cueU = Math.max(0, Math.min(1, elapsed / Math.max(800, this.lineDurationMs)))
+    return { cueIndex: this.activeCueIndex, cueU, localT }
+  }
+
   /** Unlock Web Audio for optional quiet delay-echo after gesture. */
   async unlockAudio(): Promise<void> {
     try {
@@ -189,21 +226,18 @@ export class Narration {
       if (FEMALE_HINT.test(blob)) return -180
 
       if (/^en/i.test(v.lang)) s += 16
-      // Prefer US English for western drawl phonetics
       if (/en-us/i.test(v.lang)) s += 22
       else if (/en-gb|en-au|en-ie|en-za|en-ca/i.test(v.lang)) s += 3
 
       if (/\bmale\b/i.test(blob)) s += 28
-      if (/desktop/i.test(blob)) s += 10 // richer local voice packs
+      if (/desktop/i.test(blob)) s += 10
       if (v.localService) s += 12
 
       for (const pref of COWBOY_PREFERRED) {
         if (pref.re.test(blob)) s += pref.weight
       }
 
-      // Slight penalty for bright/chatty marketing names
       if (/friendly|cheerful|assistant|news|siri|exotic/i.test(blob)) s -= 14
-      // Soft preference away from bright “neural” demo voices that sound young
       if (/jenny|aria|guy neural/i.test(blob) && /jenny|aria/i.test(blob)) s -= 20
 
       return s
@@ -216,7 +250,6 @@ export class Narration {
       ? `${this.voice.name} (${this.voice.lang}) [score ${this.voiceScore}]`
       : ''
 
-    // Absolute fallback: any en male-ish that isn't rejected
     if (this.voice && this.voiceScore < 24) {
       const male = ranked.find((v) => {
         const blob = `${v.name} ${v.lang}`
@@ -239,7 +272,7 @@ export class Narration {
     }
   }
 
-  /** HEAD-probe baked clips once; missing files stay on Web Speech. */
+  /** HEAD-probe baked clips once; missing files stay on TTS API / Web Speech. */
   private ensureClipsProbed(): Promise<void> {
     if (this.clipProbe) return this.clipProbe
     this.clipProbe = (async () => {
@@ -259,7 +292,7 @@ export class Narration {
         console.info(`[Narration] baked VO clips ready: ${n}/${MONOLOGUE.length}`)
       } else {
         console.info(
-          '[Narration] no baked VO clips — using deep Web Speech fallback (see README)',
+          '[Narration] no baked VO clips — trying /api/tts then Web Speech (see README)',
         )
       }
     })()
@@ -288,6 +321,13 @@ export class Narration {
     audio.volume = 0.96
     this.clipAudio = audio
     this.speaking = true
+    this.lineStartedAt = performance.now()
+    // Refine duration once metadata loads
+    audio.onloadedmetadata = () => {
+      if (Number.isFinite(audio.duration) && audio.duration > 0) {
+        this.lineDurationMs = audio.duration * 1000
+      }
+    }
 
     audio.onended = () => {
       if (gen !== this.generation) return
@@ -300,8 +340,7 @@ export class Narration {
       if (this.clipAudio === audio) this.clipAudio = null
       this.speaking = false
       this.clipOk.set(url, false)
-      // Corrupt / vanished file — fall back once for this line (no cancel of peers)
-      this.speakCowboy(this.activeLine || '', gen)
+      void this.speakViaTtsOrWeb(this.activeLine || '', gen)
     }
 
     void audio.play().catch(() => {
@@ -309,25 +348,8 @@ export class Narration {
       if (this.clipAudio === audio) this.clipAudio = null
       this.speaking = false
       this.clipOk.set(url, false)
-      this.speakCowboy(this.activeLine || '', gen)
+      void this.speakViaTtsOrWeb(this.activeLine || '', gen)
     })
-  }
-
-  async enrichWithLore(): Promise<void> {
-    if (this.loreInjected) return
-    const lore = await fetchLoreSnippet()
-    if (!lore || this.cancelled) return
-    this.loreInjected = true
-    const line = lore.attribution
-      ? `Old voice on the wind: “${lore.text}” — ${lore.attribution}.`
-      : `Old voice on the wind: “${lore.text}”`
-    // Insert after the first line without rewinding already-spoken cues.
-    const insertAt = Math.min(1, this.cues.length)
-    this.cues = [
-      ...this.cues.slice(0, insertAt),
-      { at: Math.max(0.04, (this.cues[0]?.at ?? 0) + 0.02), text: line },
-      ...this.cues.slice(insertAt),
-    ]
   }
 
   /** Subtitle captions on/off (default on). */
@@ -339,22 +361,11 @@ export class Narration {
   }
 
   /**
-   * Enqueue monologue cues as journey/origin progress crosses their `at`.
-   * Never interrupts a line in progress — overdue cues wait in `pending`.
+   * Legacy progress sync — no-ops for cue enqueue (lines start on begin()).
+   * Kept so dive/origin callers stay safe.
    */
-  syncToProgress(progress: number): void {
+  syncToProgress(_progress: number): void {
     if (this.cancelled || !this.sessionActive) return
-
-    for (let i = this.cueIndex; i < this.cues.length; i++) {
-      const cue = this.cues[i]!
-      if (progress < cue.at) break
-      // Due when we cross `at`, or on catch-up after begin() (lastProgress < at).
-      if (this.lastProgress < cue.at) {
-        this.cueIndex = i + 1
-        this.enqueue(cue.text)
-      }
-    }
-    this.lastProgress = progress
   }
 
   /** Enqueue a line; starts playback only when the speaker is free. */
@@ -378,6 +389,15 @@ export class Narration {
   private async startLine(text: string): Promise<void> {
     const gen = this.generation
     this.lineActive = true
+    this.activeCueIndex = this.cues.findIndex((c) => c.text === text)
+    if (this.activeCueIndex < 0) {
+      this.activeCueIndex = Math.min(this.cueIndex, this.cues.length - 1)
+    }
+    this.cueIndex = Math.max(this.cueIndex, this.activeCueIndex + 1)
+    this.lineDurationMs = this.estimateLineMs(text)
+    this.lineStartedAt = performance.now()
+    const cue = this.cues[this.activeCueIndex]
+    if (cue) this.visualLocalT = cue.visual[0]
     this.show(text)
 
     window.clearTimeout(this.pauseTimer)
@@ -409,6 +429,23 @@ export class Narration {
       return
     }
 
+    await this.speakViaTtsOrWeb(text, gen)
+  }
+
+  private async speakViaTtsOrWeb(text: string, gen: number): Promise<void> {
+    if (gen !== this.generation || this.cancelled) return
+    if (this.muted) {
+      this.scheduleMutedAdvance(text, gen)
+      return
+    }
+
+    const ttsUrl = await this.fetchNeuralTts(text)
+    if (gen !== this.generation || this.cancelled) return
+    if (ttsUrl) {
+      this.playClip(ttsUrl, gen)
+      return
+    }
+
     if (!window.speechSynthesis) {
       this.scheduleMutedAdvance(text, gen)
       return
@@ -420,10 +457,66 @@ export class Narration {
     this.speakCowboy(text, gen)
   }
 
+  /**
+   * Optional server neural TTS (`/api/tts`). Returns blob/object URL or null.
+   * GitHub Pages has no API — bake clips instead. Dev/prod Express can synthesize
+   * and cache under public/audio/vo/.
+   */
+  private async fetchNeuralTts(text: string): Promise<string | null> {
+    const cached = this.ttsBlobUrl.get(text)
+    if (cached) return cached
+    if (this.ttsApiOk === false) return null
+
+    const idx = MONOLOGUE.findIndex((c) => c.text === text)
+    const body = JSON.stringify({
+      text,
+      index: idx >= 0 ? idx : undefined,
+      voice: 'en-US-DavisNeural',
+    })
+
+    try {
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      })
+      if (!res.ok) {
+        this.ttsApiOk = false
+        return null
+      }
+      const ctype = res.headers.get('content-type') || ''
+      if (ctype.includes('application/json')) {
+        const data = (await res.json()) as { url?: string; cached?: boolean }
+        if (data.url) {
+          const abs = data.url.startsWith('http') ? data.url : withBase(data.url)
+          this.ttsBlobUrl.set(text, abs)
+          this.ttsApiOk = true
+          return abs
+        }
+        this.ttsApiOk = false
+        return null
+      }
+      const blob = await res.blob()
+      if (!blob.size) {
+        this.ttsApiOk = false
+        return null
+      }
+      const obj = URL.createObjectURL(blob)
+      this.ttsBlobUrl.set(text, obj)
+      this.ttsApiOk = true
+      return obj
+    } catch {
+      this.ttsApiOk = false
+      return null
+    }
+  }
+
   /** Mute / no-engine: keep queue timing so every line is “heard” as captions. */
   private scheduleMutedAdvance(text: string, gen = this.generation): void {
     window.clearTimeout(this.muteAdvanceTimer)
     const ms = this.estimateLineMs(text)
+    this.lineDurationMs = ms
+    this.lineStartedAt = performance.now()
     this.speaking = false
     this.muteAdvanceTimer = window.setTimeout(() => {
       if (gen !== this.generation || this.cancelled) return
@@ -434,7 +527,6 @@ export class Narration {
   private estimateLineMs(text: string): number {
     const words = text.trim().split(/\s+/).filter(Boolean).length
     const { rate } = this.deliveryParams()
-    // ~165 wpm baseline, slowed by cowboy rate + clause pauses
     const base = (words / Math.max(0.55, rate * 2.2)) * 1000
     return Math.max(2200, Math.min(14000, base + 900))
   }
@@ -444,6 +536,8 @@ export class Narration {
     this.speaking = false
     this.lineActive = false
     this.clauseChain = 0
+    const cue = this.cues[this.activeCueIndex]
+    if (cue) this.visualLocalT = cue.visual[1]
     this.scheduleClear()
 
     if (this.cancelled) return
@@ -460,6 +554,8 @@ export class Narration {
     if (this.finishedAll || this.cancelled) return
     if (this.cueIndex < this.cues.length || this.pending.length || this.lineActive) return
     this.finishedAll = true
+    this.activeCueIndex = this.cues.length - 1
+    this.visualLocalT = 1
     this.onCompleteCb?.()
   }
 
@@ -477,8 +573,6 @@ export class Narration {
 
   /** Pitch / rate for deepest usable delivery without broken engines. */
   private deliveryParams(): { pitch: number; rate: number } {
-    // Spec allows 0–2; many engines distort below ~0.5 — stay in 0.52–0.68.
-    // Slightly slower than before so completeness lands cleanly.
     if (this.voiceScore >= 55) return { pitch: 0.52, rate: 0.68 }
     if (this.voiceScore >= 40) return { pitch: 0.56, rate: 0.7 }
     if (this.voiceScore >= 28) return { pitch: 0.6, rate: 0.72 }
@@ -499,6 +593,8 @@ export class Narration {
     const clauses = this.splitClauses(text)
     this.clauseChain = 0
     this.speaking = true
+    this.lineStartedAt = performance.now()
+    this.lineDurationMs = this.estimateLineMs(text)
     this.speakClauseChain(clauses, gen)
   }
 
@@ -538,18 +634,15 @@ export class Narration {
     u.onend = () => {
       if (gen !== this.generation) return
       this.clauseChain += 1
-      // Human breath between clauses — longer after ellipsis / em-dash cadence
       const gap = /[….]$/.test(chunk.trim()) || /—/.test(chunk) ? 420 : 240
       window.setTimeout(() => this.speakClauseChain(clauses, gen), gap)
     }
     u.onerror = (ev) => {
       if (gen !== this.generation) return
-      // 'interrupted' from our own stop/mute — don't chain further
       if (ev.error === 'interrupted' || ev.error === 'canceled') {
         this.speaking = false
         return
       }
-      // Skip broken clause; keep the story moving
       this.clauseChain += 1
       window.setTimeout(() => this.speakClauseChain(clauses, gen), 160)
     }
@@ -580,24 +673,28 @@ export class Narration {
     }, 420)
   }
 
-  /** Start (or restart) origin VO from the top of the cue list. */
+  /** Start (or restart) origin VO — enqueue every monologue line in order. */
   begin(): void {
     this.stopSpeakingOnly()
     this.cancelled = false
     this.sessionActive = true
     this.generation += 1
     this.cueIndex = 0
-    this.lastProgress = -1
     this.activeLine = ''
+    this.activeCueIndex = -1
     this.clauseChain = 0
     this.pending = []
     this.lineActive = false
     this.finishedAll = false
+    this.visualLocalT = 0
+    this.cues = [...MONOLOGUE]
     this.pickVoice()
     void window.speechSynthesis?.getVoices()
     void this.unlockAudio()
     void this.ensureClipsProbed()
-    void this.enrichWithLore()
+    for (const cue of this.cues) {
+      this.enqueue(cue.text)
+    }
   }
 
   /** Hard stop — Skip intro / leave journey. Cancels mid-line cleanly. */
@@ -608,6 +705,7 @@ export class Narration {
     this.pending = []
     this.lineActive = false
     this.finishedAll = true
+    this.activeCueIndex = -1
     this.clearTimers()
     this.stopClip()
     if (window.speechSynthesis) window.speechSynthesis.cancel()
@@ -622,15 +720,15 @@ export class Narration {
     this.sessionActive = false
     this.generation += 1
     this.cueIndex = 0
-    this.lastProgress = -1
     this.cues = [...MONOLOGUE]
-    this.loreInjected = false
     this.activeLine = ''
+    this.activeCueIndex = -1
     this.speaking = false
     this.clauseChain = 0
     this.pending = []
     this.lineActive = false
     this.finishedAll = false
+    this.visualLocalT = 0
     this.clearTimers()
     this.stopClip()
     if (window.speechSynthesis) window.speechSynthesis.cancel()

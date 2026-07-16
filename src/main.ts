@@ -96,9 +96,7 @@ const sequence = new TitleSequence(canvas, {
     hideStoryEndUi()
     narration.reset()
     narration.begin()
-    void ensureMythAudio().then(() => {
-      narration.syncToProgress(0.02)
-    })
+    void ensureMythAudio()
   },
   onStoryEnd() {
     showSkipIntro(false)
@@ -109,6 +107,9 @@ const sequence = new TitleSequence(canvas, {
   },
   shouldHoldForNarration() {
     return narration.isBusy() || !narration.hasFinishedAll()
+  },
+  getNarrationVisual() {
+    return narration.getCueState()
   },
   onPlanetWhoosh(intensity) {
     score.playPlanetWhoosh(intensity)

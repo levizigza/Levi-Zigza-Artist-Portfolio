@@ -52,6 +52,15 @@ export type TitleSequenceCallbacks = {
    * Origin stays on the end hold until false (or user Enter / Rewind / Skip).
    */
   shouldHoldForNarration?: () => boolean
+  /**
+   * VO-driven origin localT (0–1). When set, origin visuals follow narration
+   * beats instead of a free-running wall clock.
+   */
+  getNarrationVisual?: () => {
+    localT: number
+    cueIndex: number
+    cueU: number
+  } | null
 }
 
 type Phase =
@@ -684,10 +693,14 @@ export class TitleSequence {
       }
       this.syncIntroSfx('dive', 0, Math.max(zoomEase, warpT))
     } else if (this.phase === 'origin' || this.phase === 'storyEnd') {
+      const narr = this.callbacks.getNarrationVisual?.()
+      const timeLocal = Math.min(STORY_HOLD_LOCAL, this.phaseT / this.originDuration)
       const localT =
         this.phase === 'storyEnd'
-          ? STORY_HOLD_LOCAL
-          : Math.min(STORY_HOLD_LOCAL, this.phaseT / this.originDuration)
+          ? Math.max(STORY_HOLD_LOCAL, narr?.localT ?? STORY_HOLD_LOCAL)
+          : narr
+            ? Math.min(1, Math.max(timeLocal * 0.15, narr.localT))
+            : timeLocal
       // Draw at held frame; cue clock may already be at bloomEnd during storyEnd.
       const absProgress =
         this.phase === 'storyEnd' ? ORIGIN.bloomEnd : localT * ORIGIN.bloomEnd
@@ -700,11 +713,13 @@ export class TitleSequence {
       ctx.save()
       ctx.globalAlpha = 1
       this.origin.draw(ctx, {
-        t: localT,
+        t: Math.min(1, localT),
         time,
         width: w,
         height: h,
         alpha: 1,
+        cueIndex: narr?.cueIndex,
+        cueU: narr?.cueU,
       })
       ctx.restore()
       this.emitAum(this.origin.aumIntensity(localT * ORIGIN.bloomEnd))
@@ -807,9 +822,12 @@ export class TitleSequence {
     }
 
     if (this.phase === 'origin') {
-      const holdAt = this.originDuration * STORY_HOLD_LOCAL
-      const u = Math.min(STORY_HOLD_LOCAL, this.phaseT / this.originDuration)
-      this.progress = u * ORIGIN.bloomEnd
+      const narr = this.callbacks.getNarrationVisual?.()
+      const timeLocal = Math.min(STORY_HOLD_LOCAL, this.phaseT / this.originDuration)
+      const localT = narr
+        ? Math.min(1, Math.max(timeLocal * 0.15, narr.localT))
+        : timeLocal
+      this.progress = localT * ORIGIN.bloomEnd
       const label = labelForProgress(Math.max(0.08, this.progress))
       if (label !== this.lastLabel) {
         this.lastLabel = label
@@ -817,9 +835,14 @@ export class TitleSequence {
       } else {
         this.callbacks.onProgress?.(this.progress, label)
       }
-      // Reach last readable frame → hold (never auto-settle to site).
-      if (this.phaseT >= holdAt) {
-        this.phaseT = holdAt
+      // Reach last readable frame when VO is done (or time fallback).
+      const voDone =
+        this.callbacks.shouldHoldForNarration != null
+          ? !this.callbacks.shouldHoldForNarration()
+          : this.phaseT >= this.originDuration * STORY_HOLD_LOCAL
+      const atHold = localT >= STORY_HOLD_LOCAL * 0.98
+      if (atHold && (voDone || this.phaseT >= this.originDuration * 1.35)) {
+        this.phaseT = this.originDuration * STORY_HOLD_LOCAL
         this.phase = 'storyEnd'
         this.emitAum(0)
         this.callbacks.onProgress?.(ORIGIN.bloomEnd, 'end')

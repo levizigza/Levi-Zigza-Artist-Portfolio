@@ -1,95 +1,107 @@
 # Arist Portfolio (BALYAOKO)
 
-Vite + TypeScript prairie-cosmos portfolio. Opening VO uses pre-rendered cowboy clips when present, with deep-pitched Web Speech as fallback. Intro score is procedural Web Audio (soft gate bed → synth/sci-fi journey underscore + planet whoosh / sun heat SFX).
+Vite + TypeScript prairie-cosmos portfolio. Opening VO prefers pre-rendered neural clips under `public/audio/vo/`, with optional `/api/tts` cache on the Express host, then deep Web Speech as last resort. Intro score is procedural Web Audio.
 
-## Cowboy narration VO (voice-changer bake)
+## Cowboy narration VO
 
-Visitors never need a local ML server. Bake cowboy clips offline with [w-okada/voice-changer](https://github.com/w-okada/voice-changer) (VCClient: RVC / Beatrice), then ship MP3s.
+Visitors never need a local ML / voice-changer server. Prefer shipping static MP3s.
 
-### Why bake (not realtime)
+### Playback order
 
-VCClient converts **mic/file audio → character voice** over a local Python stack (REST for settings/models; **Socket.IO** for realtime PCM). It is not browser TTS and is too heavy to require for every visitor. Baking static files under `public/audio/vo/` keeps the site static while sounding like a real cowboy model.
+1. **Baked clips** — `public/audio/vo/line-00.mp3` … `line-15.mp3`
+2. **`POST /api/tts`** — Express synthesizes + caches (dev / Node host only; not on bare GitHub Pages)
+3. **Web Speech** — deepest available local male English voice (robotic; last resort)
 
-### Web Speech limits (honest)
+### Bake with Edge neural TTS (recommended, free, no key)
 
-Without baked clips, `Narration` picks the deepest available **local** male English voice and speaks at low pitch (~0.52–0.68) and slow rate (~0.7–0.76) with clause pauses. That is as masculine as browsers allow — it will still sound like TTS, not a film VA. Some engines ignore pitch or distort below ~0.5. Online Edge/cloud TTS is not used (needs network, not visitor-offline-friendly). **Ship `line-XX.mp3` for the real cowboy character.**
+Uses Microsoft Edge online TTS (`en-US-GuyNeural` — deep masculine) via the Python [`edge-tts`](https://pypi.org/project/edge-tts/) CLI (falls back to npm / Google Translate TTS if needed):
 
-### Workflow
+```bash
+pip install edge-tts   # once
+npm install
+npm run vo:bake          # writes public/audio/vo/line-XX.mp3
+# VO_FORCE=1 npm run vo:bake   # overwrite
+npm run build
+```
 
-1. Install VCClient from the [Hugging Face releases](https://huggingface.co/wok000/vcclient000/tree/main) (Windows CUDA/ONNX for RVC; see [English README](https://raw.githubusercontent.com/w-okada/voice-changer/master/docs_i18n/README_en.md)).
-2. Load an RVC (or Beatrice) model that reads as dry western / gravelly male. Respect model train-data licenses.
-3. List lines: `npm run vo:manifest` (prints the file ↔ text table from `src/content/monologue.ts`).
-4. For each line, record yourself reading it (or speak into VCClient realtime and capture output), **or** dry-run TTS → WAV then convert through the cowboy model.
-5. Export converted audio as mono MP3 (≈128–192 kbps is fine).
-6. Name files by monologue index and drop them here:
+Optional VoiceRSS ([public-apis](https://github.com/public-apis/public-apis) / [voicerss.org](https://www.voicerss.org/api/)) — set in `.env`:
 
-| File | Line (from `MONOLOGUE`) |
-| --- | --- |
-| `public/audio/vo/line-00.mp3` | Way out past maps… |
-| `public/audio/vo/line-01.mp3` | Noodles for arms… |
-| … | … |
-| `public/audio/vo/line-15.mp3` | Reckon you’re already inside the wonder. |
+```
+TTS_PROVIDER=voicerss
+TTS_API_KEY=your-key
+TTS_VOICE=Mike
+```
 
-7. Rebuild / reload. `Narration` probes `/audio/vo/line-XX.mp3` and plays clips when present; missing lines and lore-injected snippets use deep Web Speech.
+Then `npm run vo:bake` or hit `/api/tts` at runtime (cached under `public/audio/vo/`).
 
-Optional: leave some `line-XX.mp3` out — only those indices fall back to SpeechSynthesis.
+### Optional offline RVC / VCClient
 
-### Not in this app
+You can still re-voice baked WAVs through [w-okada/voice-changer](https://github.com/w-okada/voice-changer) offline if you want a custom cowboy model. Do not require that stack for visitors.
 
-- No embedded RVC/Beatrice ML stack
-- No `VITE_VOICE_CHANGER_URL` realtime bridge (Socket.IO streaming is not a small static-site path)
-- Visitors are never asked to run a voice-changer
+### Web Speech limits
+
+Without clips or `/api/tts`, `Narration` picks a deep local male voice at low pitch. It will still sound like OS TTS. **Ship `line-XX.mp3` for GitHub Pages.**
+
+### Manifest
+
+```bash
+npm run vo:manifest
+```
+
+## Origin story ↔ VO sync
+
+After hyperspace, monologue lines play in order. Origin 8-bit visuals follow each line’s `visual` window and cue progress (seed rises → catch → plant → sapling grows with the spoken beats). PoetryDB lore is **not** injected into VO.
 
 ## Intro audio (procedural)
 
 - **Gate bed** — soft space ambient on the BALYAOKO screen
-- **Journey score** (after Enter) — synth pads, sparse arps, pulse, shimmer under the VO; crossfades from the gate bed; respects mute
-- **SFX** — planet flyby whooshes (eye gate + origin cosmos); sun / dream-heat crackle while the eye-sun or dream bloom is present
+- **Journey score** (after Enter) — synth pads under the VO
+- **SFX** — planet whoosh / dream-heat crackle
 
 ## Scripts
 
 ```bash
-cp .env.example .env   # set ADMIN_PASSWORD
+cp .env.example .env   # set ADMIN_PASSWORD; optional TTS_* 
 npm install
+npm run vo:bake        # neural clips for Pages
 npm run dev            # Vite (:5173) + API (:5174)
 npm run build
-npm run preview        # static preview (proxies /api if API is running)
-npm start              # production: API + dist + uploads
+npm run preview
+npm start
 npm run vo:manifest
 ```
 
 ## Admin login & media uploads
 
-Chambers load media from a JSON manifest (`public/uploads/manifest.json`) via `/api/manifest`. Placeholders stay until you upload.
+Chambers load media from a JSON manifest (`public/uploads/manifest.json`) via `/api/manifest`.
 
-1. Copy `.env.example` → `.env` and set `ADMIN_PASSWORD` (and optionally `SESSION_SECRET`).
+1. Copy `.env.example` → `.env` and set `ADMIN_PASSWORD`.
 2. Run `npm run dev`.
-3. Open **http://localhost:5173/admin** (Vite serves the admin page; `/api` is proxied to the API on port 5174).
-4. Log in with `ADMIN_PASSWORD`.
-5. Upload by chamber type:
-   - **Film / Video** → film strip
-   - **Photo darkroom** → hanging prints
-   - **Music (cassette)** → Walkman tapes (plays the uploaded audio)
-   - **Scripts (tablet)** → tablet inscriptions (`.txt` / `.md`)
-6. Refresh the portfolio — new items appear without redeploying code.
+3. Open **http://localhost:5173/admin**.
+4. Upload by chamber type (film / photo / music / scripts).
 
 ### Env vars
 
 | Var | Purpose |
 | --- | --- |
 | `ADMIN_PASSWORD` | Admin login (required for uploads) |
-| `SESSION_SECRET` | Cookie HMAC secret (optional; defaults to password) |
+| `SESSION_SECRET` | Cookie HMAC secret (optional) |
 | `PORT` | API port (default `5174`) |
+| `TTS_PROVIDER` | `edge` (default) or `voicerss` |
+| `TTS_API_KEY` | VoiceRSS key when using voicerss |
+| `TTS_VOICE` | Edge short name or VoiceRSS voice |
+| `TTS_RATE` / `TTS_PITCH` | Edge SSML-style rate/pitch |
 
 ### API
 
 | Method | Path | Auth | Notes |
 | --- | --- | --- | --- |
-| POST | `/api/login` | — | `{ "password": "..." }` → httpOnly cookie |
+| POST | `/api/login` | — | `{ "password": "..." }` |
 | POST | `/api/logout` | — | Clears cookie |
 | GET | `/api/session` | — | `{ authenticated }` |
 | GET | `/api/manifest` | — | Public list of uploads |
-| POST | `/api/upload` | cookie | multipart: `file`, `type`, optional `title` |
+| POST | `/api/tts` | — | `{ text, index?, voice? }` → cached MP3 URL |
+| POST | `/api/upload` | cookie | multipart upload |
 | DELETE | `/api/delete` | cookie | `{ "id": "..." }` |
 
-Files are stored under `public/uploads/{video|photo|audio|script}/`. Soft limits: type/extension checks, size caps, upload rate limit, sanitized filenames.
+Files are stored under `public/uploads/{video|photo|audio|script}/`. Soft limits apply.
