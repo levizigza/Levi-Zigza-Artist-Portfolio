@@ -1605,6 +1605,8 @@
 }
 
 .about-projector-label {
+  --callout-line: 4.5rem;
+  --callout-angle: 0deg;
   position: absolute;
   z-index: 8;
   max-width: 12rem;
@@ -1622,6 +1624,36 @@
   transform: translate3d(var(--jar-label-x), var(--jar-label-y), 56px);
 }
 
+.about-projector-label::before,
+.about-projector-label::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.about-projector-label::after {
+  top: 50%;
+  width: var(--callout-line);
+  height: 1px;
+  background: linear-gradient(90deg, rgba(120, 245, 240, 0.75), rgba(120, 245, 240, 0.12));
+  box-shadow: 0 0 7px rgba(80, 240, 230, 0.45);
+  transform: rotate(var(--callout-angle));
+  transform-origin: left center;
+}
+
+.about-projector-label::before {
+  top: calc(50% - 3px);
+  width: 7px;
+  height: 7px;
+  border: 1px solid rgba(160, 255, 245, 0.8);
+  border-radius: 50%;
+  background: rgba(8, 28, 34, 0.9);
+  box-shadow:
+    0 0 0 3px rgba(80, 230, 220, 0.08),
+    0 0 10px rgba(80, 240, 230, 0.65);
+  animation: specimen-anchor-pulse 2.4s ease-in-out infinite;
+}
+
 .about-projector-label span {
   display: block;
   margin-bottom: 0.15rem;
@@ -1632,19 +1664,52 @@
 }
 
 .about-projector-label-a {
-  left: -0.55rem;
-  top: 14%;
+  --callout-line: 5.2rem;
+  --callout-angle: 12deg;
+  left: -2.2rem;
+  top: 18%;
+}
+
+.about-projector-label-a::after {
+  left: 100%;
+}
+
+.about-projector-label-a::before {
+  left: calc(100% + var(--callout-line) - 2px);
 }
 
 .about-projector-label-b {
-  right: -1.1rem;
-  top: 36%;
+  --callout-line: 5rem;
+  --callout-angle: -14deg;
+  right: -2.5rem;
+  top: 39%;
   bottom: auto;
+}
+
+.about-projector-label-b::after {
+  right: 100%;
+  background: linear-gradient(270deg, rgba(120, 245, 240, 0.75), rgba(120, 245, 240, 0.12));
+  transform: rotate(var(--callout-angle));
+  transform-origin: right center;
+}
+
+.about-projector-label-b::before {
+  right: calc(100% + var(--callout-line) - 2px);
 }
 
 .about-projector-label-c {
   left: 8%;
   bottom: 8%;
+}
+
+.about-projector-label-c::before,
+.about-projector-label-c::after {
+  display: none;
+}
+
+@keyframes specimen-anchor-pulse {
+  0%, 100% { opacity: 0.55; scale: 0.88; }
+  50% { opacity: 1; scale: 1.08; }
 }
 
 .about-wake-btn {
@@ -1936,6 +2001,13 @@
   .about-projector-label-c {
     left: 0;
     bottom: 4%;
+  }
+
+  .about-projector-label-a::before,
+  .about-projector-label-a::after,
+  .about-projector-label-b::before,
+  .about-projector-label-b::after {
+    display: none;
   }
 
   .about-copy {
