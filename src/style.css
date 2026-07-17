@@ -888,6 +888,19 @@ body {
   --planet-accent: var(--iris);
 }
 
+.site[data-chamber="about"] {
+  --planet-sky-a: rgba(196, 142, 88, 0.2);
+  --planet-sky-b: rgba(62, 132, 118, 0.15);
+  --planet-sky-c: rgba(128, 168, 220, 0.1);
+  --planet-horizon: rgba(228, 174, 108, 0.2);
+  --planet-ground: rgba(12, 13, 18, 0.94);
+  --planet-accent: #d9a56d;
+  background:
+    radial-gradient(ellipse 70% 48% at 18% 12%, rgba(205, 145, 88, 0.2), transparent 56%),
+    radial-gradient(ellipse 52% 44% at 88% 76%, rgba(48, 116, 108, 0.16), transparent 52%),
+    linear-gradient(164deg, #15100e 0%, #050609 44%, #0a1517 100%);
+}
+
 .site[data-chamber="video"] {
   --planet-sky-a: rgba(255, 140, 60, 0.22);
   --planet-sky-b: rgba(200, 70, 40, 0.16);
@@ -1010,6 +1023,7 @@ body {
 }
 
 .site[data-chamber="video"] .site-solar-orbit,
+.site[data-chamber="about"] .site-solar-orbit,
 .site[data-chamber="music"] .site-solar-orbit,
 .site[data-chamber="scripts"] .site-solar-orbit,
 .site[data-chamber="photography"] .site-solar-orbit,
@@ -1340,8 +1354,8 @@ body {
   align-items: stretch;
   gap: 0.15rem;
   flex: 1 1 auto;
-  width: min(520px, 100%);
-  max-width: 520px;
+  width: min(620px, 100%);
+  max-width: 620px;
   margin: 0 auto;
   padding: 0.3rem;
   background: color-mix(in srgb, var(--planet-accent) 6%, rgba(1, 4, 12, 0.72));
@@ -1435,6 +1449,7 @@ body {
 }
 
 .site[data-chamber="video"] .eyebrow { color: #e09460; }
+.site[data-chamber="about"] .eyebrow { color: #d9a56d; }
 .site[data-chamber="music"] .eyebrow { color: var(--teal); }
 .site[data-chamber="scripts"] .eyebrow { color: var(--clay); }
 .site[data-chamber="photography"] .eyebrow { color: #e07840; }
@@ -1663,6 +1678,7 @@ body {
 }
 
 .portal[data-portal="video"] { border-color: rgba(255, 150, 80, 0.28); }
+.portal[data-portal="about"] { border-color: rgba(217, 165, 109, 0.34); }
 .portal[data-portal="music"] { border-color: rgba(58, 239, 232, 0.22); }
 .portal[data-portal="scripts"] { border-color: rgba(196, 107, 58, 0.28); }
 .portal[data-portal="photography"] { border-color: rgba(224, 100, 50, 0.3); }

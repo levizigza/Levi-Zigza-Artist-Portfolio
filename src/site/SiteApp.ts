@@ -22,6 +22,7 @@ export type SiteHandlers = {
 
 const PLANET_SIGNAL: Record<string, string> = {
   home: 'ORBITAL HUB',
+  about: 'EARTH · ARTIST ORIGIN',
   video: 'JUPITER · FILM STRIP',
   music: 'SATURN · WALKMAN',
   scripts: 'MERCURY · TABLET',
