@@ -1,7 +1,8 @@
-import 'dotenv/config'
 import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import dotenv from 'dotenv'
 import express from 'express'
 import cookieParser from 'cookie-parser'
 import multer from 'multer'
@@ -27,6 +28,11 @@ import {
   isSupabaseConfigured,
   uploadToSupabase,
 } from './supabaseStorage.js'
+
+// Load .env from repo root (not process.cwd) so Windows / concurrently starts still work.
+dotenv.config({
+  path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.env'),
+})
 
 const PORT = Number(process.env.PORT || 5174)
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || ''

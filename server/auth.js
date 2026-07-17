@@ -82,8 +82,9 @@ export { COOKIE_NAME }
  * @param {string} expected
  */
 export function passwordsMatch(provided, expected) {
-  const a = Buffer.from(String(provided ?? ''), 'utf8')
-  const b = Buffer.from(String(expected ?? ''), 'utf8')
+  // Trim both sides so .env CRLF / accidental spaces don't reject valid logins.
+  const a = Buffer.from(String(provided ?? '').trim(), 'utf8')
+  const b = Buffer.from(String(expected ?? '').trim(), 'utf8')
   if (a.length !== b.length) {
     crypto.timingSafeEqual(a, a)
     return false
