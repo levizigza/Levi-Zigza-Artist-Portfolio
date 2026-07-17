@@ -4,6 +4,7 @@
  */
 
 import { fetchLoreSnippet, formatLoreQuote } from '../content/loreApi'
+import { AboutJar } from './AboutJar'
 import { CassetteDeck } from './CassetteDeck'
 import { ChamberLife, type BeatSource } from './ChamberLife'
 import { FilmStripAudio } from './FilmStripAudio'
@@ -58,6 +59,7 @@ export class SiteApp {
       onExclusiveChange: (active) => this.handlers.onMediaExclusive?.(active),
     })
     new TabletChamber(root)
+    new AboutJar(root)
     this.life = new ChamberLife(root, {
       getLevel: () => Math.max(beat.getLevel(), this.deck.getLevel() * 0.7),
     })
