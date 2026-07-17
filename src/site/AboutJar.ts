@@ -1,17 +1,22 @@
 /**
  * Interactive CSS 3D head-in-jar specimen for the About chamber.
- * Pointer/touch parallax only — no WebGL. Respects prefers-reduced-motion.
+ * Pointer/touch parallax + wake pulse — no WebGL. Respects prefers-reduced-motion.
  */
 
-const MAX_TILT = 9
-const MAX_TILT_TOUCH = 5
-const SHEEN_RANGE = 18
-const BUBBLE_RANGE = 10
-const LABEL_RANGE = 8
+import { withBase } from '../content/withBase'
+
+const MAX_TILT = 14
+const MAX_TILT_TOUCH = 8
+const SHEEN_RANGE = 26
+const BUBBLE_RANGE = 14
+const LABEL_RANGE = 12
+const FLOAT_RANGE = 10
 
 export class AboutJar {
   private jar: HTMLElement | null
   private wrap: HTMLElement | null
+  private status: HTMLElement | null
+  private wakeBtn: HTMLButtonElement | null
   private reducedMotion = false
   private raf = 0
   private targetX = 0
@@ -19,14 +24,24 @@ export class AboutJar {
   private currentX = 0
   private currentY = 0
   private active = false
+  private waking = false
+  private wakeUntil = 0
   private pointerId: number | null = null
+  private t0 = performance.now()
 
   constructor(root: HTMLElement) {
-    this.wrap = root.querySelector('.about-specimen-wrap')
+    this.wrap = root.querySelector('[data-about-case]') ?? root.querySelector('.about-specimen-wrap')
     this.jar = root.querySelector('[data-about-jar]')
+    this.status = root.querySelector('[data-about-status]')
+    this.wakeBtn = root.querySelector('[data-about-wake]')
     this.reducedMotion =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    const portrait = root.querySelector<HTMLImageElement>('[data-about-portrait]')
+    if (portrait) {
+      portrait.src = withBase('/images/levi-head-in-jar.png')
+    }
 
     if (!this.jar || !this.wrap || this.reducedMotion) {
       this.wrap?.classList.add('is-static')
@@ -45,6 +60,9 @@ export class AboutJar {
     wrap.addEventListener('pointerup', this.onPointerUp)
     wrap.addEventListener('pointercancel', this.onPointerUp)
 
+    this.jar?.addEventListener('click', this.onWake)
+    this.wakeBtn?.addEventListener('click', this.onWake)
+
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
     const onMotion = () => {
       this.reducedMotion = mq.matches
@@ -58,6 +76,20 @@ export class AboutJar {
       }
     }
     mq.addEventListener?.('change', onMotion)
+  }
+
+  private onWake = (): void => {
+    if (this.reducedMotion) return
+    this.waking = true
+    this.wakeUntil = performance.now() + 1600
+    this.wrap?.classList.add('is-waking')
+    if (this.status) this.status.textContent = 'Awake · broadcasting'
+    window.setTimeout(() => {
+      this.wrap?.classList.remove('is-waking')
+      if (this.status && performance.now() >= this.wakeUntil) {
+        this.status.textContent = 'Stable · transmitting'
+      }
+    }, 1700)
   }
 
   private onPointerDown = (e: PointerEvent): void => {
@@ -105,7 +137,7 @@ export class AboutJar {
     if (this.reducedMotion) return
     this.raf = requestAnimationFrame(this.tick)
 
-    const ease = this.active ? 0.12 : 0.08
+    const ease = this.active ? 0.14 : 0.07
     this.currentX += (this.targetX - this.currentX) * ease
     this.currentY += (this.targetY - this.currentY) * ease
 
@@ -118,6 +150,11 @@ export class AboutJar {
       this.currentY = 0
     }
 
+    if (this.waking && performance.now() >= this.wakeUntil) {
+      this.waking = false
+      if (this.status) this.status.textContent = 'Stable · transmitting'
+    }
+
     this.apply()
   }
 
@@ -126,16 +163,24 @@ export class AboutJar {
     const wrap = this.wrap
     if (!jar || !wrap) return
 
-    const rx = (-this.currentY).toFixed(2)
-    const ry = this.currentX.toFixed(2)
+    const now = performance.now()
+    const idle = Math.sin((now - this.t0) / 900) * 1.2
+    const wakeBoost = this.waking ? 1 + Math.sin((this.wakeUntil - now) / 80) * 0.08 : 1
+    const rx = (-this.currentY + idle * 0.35).toFixed(2)
+    const ry = (this.currentX + idle * 0.2).toFixed(2)
+    const tz = (FLOAT_RANGE + Math.abs(this.currentX) * 0.4).toFixed(1)
     const sheenX = ((this.currentX / MAX_TILT) * SHEEN_RANGE).toFixed(1)
-    const sheenY = ((this.currentY / MAX_TILT) * SHEEN_RANGE * 0.6).toFixed(1)
+    const sheenY = ((this.currentY / MAX_TILT) * SHEEN_RANGE * 0.65).toFixed(1)
     const bubbleX = ((this.currentX / MAX_TILT) * BUBBLE_RANGE).toFixed(1)
     const labelX = ((this.currentX / MAX_TILT) * LABEL_RANGE).toFixed(1)
-    const labelY = ((this.currentY / MAX_TILT) * LABEL_RANGE * 0.5).toFixed(1)
-    const glow = (0.55 + Math.min(0.45, (Math.abs(this.currentX) + Math.abs(this.currentY)) / 28)).toFixed(3)
+    const labelY = ((this.currentY / MAX_TILT) * LABEL_RANGE * 0.55).toFixed(1)
+    const glow = (
+      0.55 +
+      Math.min(0.5, (Math.abs(this.currentX) + Math.abs(this.currentY)) / 24) +
+      (this.waking ? 0.25 : 0)
+    ).toFixed(3)
 
-    jar.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`
+    jar.style.transform = `translateZ(${tz}px) rotateX(${rx}deg) rotateY(${ry}deg) scale(${wakeBoost.toFixed(3)})`
     wrap.style.setProperty('--jar-sheen-x', `${sheenX}px`)
     wrap.style.setProperty('--jar-sheen-y', `${sheenY}px`)
     wrap.style.setProperty('--jar-bubble-x', `${bubbleX}px`)
@@ -149,8 +194,10 @@ export class AboutJar {
     this.targetY = 0
     this.currentX = 0
     this.currentY = 0
+    this.waking = false
     if (this.jar) this.jar.style.transform = ''
     if (this.wrap) {
+      this.wrap.classList.remove('is-waking')
       this.wrap.style.removeProperty('--jar-sheen-x')
       this.wrap.style.removeProperty('--jar-sheen-y')
       this.wrap.style.removeProperty('--jar-bubble-x')
