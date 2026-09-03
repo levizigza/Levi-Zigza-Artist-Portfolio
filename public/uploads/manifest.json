@@ -1,5 +1,105 @@
-﻿{
+{
   "items": [
+    {
+      "id": "video-mv-01",
+      "type": "video",
+      "title": "Quarantine Nights in Downtown Calgary",
+      "path": "https://i.ytimg.com/vi/qt0IWdNC9uo/hqdefault.jpg",
+      "externalUrl": "https://www.youtube.com/watch?v=qt0IWdNC9uo",
+      "provider": "youtube",
+      "youtubeId": "qt0IWdNC9uo",
+      "category": "music-video",
+      "categoryLabel": "Music Videos",
+      "createdAt": "2026-09-03T04:30:00.000Z"
+    },
+    {
+      "id": "video-mv-02",
+      "type": "video",
+      "title": "Calgary Poetry Slam Promo",
+      "path": "https://i.ytimg.com/vi/Goz0E8zFTd8/hqdefault.jpg",
+      "externalUrl": "https://www.youtube.com/watch?v=Goz0E8zFTd8",
+      "provider": "youtube",
+      "youtubeId": "Goz0E8zFTd8",
+      "category": "music-video",
+      "categoryLabel": "Music Videos",
+      "createdAt": "2026-09-03T04:30:00.000Z"
+    },
+    {
+      "id": "video-mv-03",
+      "type": "video",
+      "title": "Kate Stevens - Meant For Me",
+      "path": "https://i.ytimg.com/vi/_CSO7Zchiww/hqdefault.jpg",
+      "externalUrl": "https://www.youtube.com/watch?v=_CSO7Zchiww",
+      "provider": "youtube",
+      "youtubeId": "_CSO7Zchiww",
+      "category": "music-video",
+      "categoryLabel": "Music Videos",
+      "createdAt": "2026-09-03T04:30:00.000Z"
+    },
+    {
+      "id": "video-mv-04",
+      "type": "video",
+      "title": "Jackie Art - Late Night Freestyle // Call Me",
+      "path": "https://i.ytimg.com/vi/aQWnLBExkx4/hqdefault.jpg",
+      "externalUrl": "https://www.youtube.com/watch?v=aQWnLBExkx4",
+      "provider": "youtube",
+      "youtubeId": "aQWnLBExkx4",
+      "category": "music-video",
+      "categoryLabel": "Music Videos",
+      "createdAt": "2026-09-03T04:30:00.000Z"
+    },
+    {
+      "id": "video-mv-05",
+      "type": "video",
+      "title": "Kam Sparks - I Told Her",
+      "path": "https://i.ytimg.com/vi/lSlrqdGC8W4/hqdefault.jpg",
+      "externalUrl": "https://www.youtube.com/watch?v=lSlrqdGC8W4",
+      "provider": "youtube",
+      "youtubeId": "lSlrqdGC8W4",
+      "category": "music-video",
+      "categoryLabel": "Music Videos",
+      "createdAt": "2026-09-03T04:30:00.000Z"
+    },
+    {
+      "id": "video-mv-06",
+      "type": "video",
+      "title": "7heory - Round Of Applause",
+      "path": "https://i.ytimg.com/vi/KHhNuTJdk-4/hqdefault.jpg",
+      "externalUrl": "https://www.youtube.com/watch?v=KHhNuTJdk-4",
+      "provider": "youtube",
+      "youtubeId": "KHhNuTJdk-4",
+      "category": "music-video",
+      "categoryLabel": "Music Videos",
+      "createdAt": "2026-09-03T04:30:00.000Z"
+    },
+    {
+      "id": "video-cbc-01",
+      "type": "video",
+      "title": "Ancient artifacts - Calgary residents co-create cultural exhibits with the Glenbow Museum",
+      "path": "https://www.cbc.ca/news/canada/calgary/ethiopian-glenbow-museum-community-1.7225322",
+      "externalUrl": "https://www.cbc.ca/news/canada/calgary/ethiopian-glenbow-museum-community-1.7225322",
+      "provider": "cbc",
+      "mime": "text/html",
+      "subtitle": "Article + audio",
+      "credit": "Levi Zigza with Elise Stolte - CBC Calgary",
+      "category": "cbc-news",
+      "categoryLabel": "CBC News",
+      "createdAt": "2024-06-10T11:00:00.000Z"
+    },
+    {
+      "id": "video-cbc-02",
+      "type": "video",
+      "title": "CBC Calgary News Feature",
+      "path": "https://www.cbc.ca/player/play/video/1.7151103",
+      "externalUrl": "https://www.cbc.ca/player/play/video/1.7151103",
+      "provider": "cbc",
+      "mime": "video/cbc",
+      "subtitle": "Broadcast video",
+      "credit": "CBC Calgary",
+      "category": "cbc-news",
+      "categoryLabel": "CBC News",
+      "createdAt": "2024-06-10T11:00:00.000Z"
+    },
     {
       "id": "photo-18",
       "type": "photo",

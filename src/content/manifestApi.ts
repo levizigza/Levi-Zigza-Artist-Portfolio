@@ -20,9 +20,15 @@ export type ManifestItem = {
   mime?: string
   createdAt: string
   originalName?: string
-  /** Photo archive series key, e.g. chromatic / portraiture */
+  /** Archive series key, e.g. chromatic / music-video / cbc-news */
   category?: string
   categoryLabel?: string
+  /** External watch/read URL (YouTube, CBC, etc.) */
+  externalUrl?: string
+  provider?: 'youtube' | 'cbc' | 'local'
+  youtubeId?: string
+  subtitle?: string
+  credit?: string
 }
 
 export type Manifest = {
@@ -32,7 +38,8 @@ export type Manifest = {
 const EMPTY: Manifest = { items: [] }
 
 function normalizeItem(item: ManifestItem): ManifestItem {
-  return { ...item, path: withBase(item.path) }
+  const path = /^https?:\/\//i.test(item.path) ? item.path : withBase(item.path)
+  return { ...item, path }
 }
 
 function parseManifest(data: unknown): Manifest | null {

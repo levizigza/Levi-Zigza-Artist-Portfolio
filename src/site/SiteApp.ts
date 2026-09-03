@@ -7,11 +7,11 @@ import { fetchLoreSnippet, formatLoreQuote } from '../content/loreApi'
 import { AboutJar } from './AboutJar'
 import { CassetteDeck } from './CassetteDeck'
 import { ChamberLife, type BeatSource } from './ChamberLife'
-import { FilmStripAudio } from './FilmStripAudio'
 import { hydrateChambers } from './hydrateChambers'
 import { PhotoLightbox } from './PhotoLightbox'
 import { TabletChamber } from './TabletChamber'
 import { TeleportBeam } from './TeleportBeam'
+import { VideoChamber } from './VideoChamber'
 import './chambers.css'
 
 export type SiteHandlers = {
@@ -42,7 +42,7 @@ export class SiteApp {
   private life: ChamberLife
   private beam: TeleportBeam
   private deck: CassetteDeck
-  private film: FilmStripAudio
+  private film: VideoChamber
   private currentPage = 'home'
   private warpBusy = false
   private signalEl: HTMLElement | null = null
@@ -56,7 +56,7 @@ export class SiteApp {
     this.deck = new CassetteDeck(root, {
       onPlaybackChange: (playing) => this.handlers.onMediaExclusive?.(playing),
     })
-    this.film = new FilmStripAudio(root, {
+    this.film = new VideoChamber(root, {
       onExclusiveChange: (active) => this.handlers.onMediaExclusive?.(active),
     })
     new TabletChamber(root)

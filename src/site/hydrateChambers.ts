@@ -51,12 +51,30 @@ function cassetteHtml(item: ManifestItem, index: number): string {
 
 function filmFrameHtml(item: ManifestItem, index: number): string {
   const sigil = SIGILS[index % SIGILS.length]
-  const isVideo = /\.(mp4|webm|mov)$/i.test(item.path) || (item.mime?.startsWith('video') ?? false)
-  const media = isVideo
-    ? `<video class="film-media" src="${escapeHtml(item.path)}" muted loop playsinline preload="metadata"></video>`
-    : `<img class="film-media" src="${escapeHtml(item.path)}" alt="" loading="lazy" />`
+  const youtubeId = item.youtubeId || extractYoutubeId(item.externalUrl || item.path)
+  const isFileVideo = /\.(mp4|webm|mov)$/i.test(item.path) || (item.mime?.startsWith('video') ?? false)
+  const thumb = youtubeId
+    ? `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`
+    : !isFileVideo && item.path
+      ? item.path
+      : ''
+
+  let media = ''
+  if (youtubeId) {
+    media = `<img class="film-media" src="${escapeHtml(thumb)}" alt="" loading="lazy" />
+        <span class="film-play" aria-hidden="true">▶</span>`
+  } else if (isFileVideo) {
+    media = `<video class="film-media" src="${escapeHtml(item.path)}" muted loop playsinline preload="metadata"></video>`
+  } else if (thumb) {
+    media = `<img class="film-media" src="${escapeHtml(thumb)}" alt="" loading="lazy" />`
+  }
+
+  const ytAttr = youtubeId ? ` data-youtube-id="${escapeHtml(youtubeId)}"` : ''
+  const titleAttr = ` data-title="${escapeHtml(item.title)}"`
+  const href = item.externalUrl ? ` data-external="${escapeHtml(item.externalUrl)}"` : ''
+
   return `
-    <article class="film-frame has-media" data-delay="${index % 4}" data-id="${escapeHtml(item.id)}">
+    <article class="film-frame has-media" data-delay="${index % 4}" data-id="${escapeHtml(item.id)}"${ytAttr}${titleAttr}${href}>
       <div class="film-cell">
         ${media}
         <div class="film-grain"></div>
@@ -65,6 +83,98 @@ function filmFrameHtml(item: ManifestItem, index: number): string {
       </div>
       <span class="altar-label">${escapeHtml(item.title)}</span>
     </article>`
+}
+
+function extractYoutubeId(url: string): string | null {
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/)
+  return m?.[1] ?? null
+}
+
+function cbcCardHtml(item: ManifestItem): string {
+  const kind = item.mime?.includes('html') || item.subtitle?.toLowerCase().includes('article')
+    ? 'article'
+    : item.provider === 'cbc' && (item.externalUrl || '').includes('/player/')
+      ? 'video'
+      : 'story'
+  const formatLabel =
+    item.subtitle ||
+    (kind === 'article' ? 'Article + audio' : kind === 'video' ? 'Broadcast video' : 'CBC News')
+  const href = escapeHtml(item.externalUrl || item.path)
+  return `
+    <a class="cbc-card cbc-card-${kind}" href="${href}" target="_blank" rel="noopener noreferrer">
+      <div class="cbc-card-mark">
+        <span class="cbc-wordmark">CBC</span>
+        <span class="cbc-wordmark-sub">News</span>
+      </div>
+      <div class="cbc-card-body">
+        <p class="cbc-card-kicker">${escapeHtml(formatLabel)}</p>
+        <h4 class="cbc-card-title">${escapeHtml(item.title)}</h4>
+        ${item.credit ? `<p class="cbc-card-credit">${escapeHtml(item.credit)}</p>` : ''}
+        <span class="cbc-card-cta">Open on CBC ↗</span>
+      </div>
+    </a>`
+}
+
+function hydrateFilm(root: HTMLElement, items: ManifestItem[]): void {
+  if (!items.length) return
+
+  const archive = root.querySelector('#video-archive')
+  const musicItems = items.filter((i) => (i.category || 'music-video') === 'music-video')
+  const cbcItems = items.filter((i) => i.category === 'cbc-news')
+  const other = items.filter((i) => i.category && i.category !== 'music-video' && i.category !== 'cbc-news')
+  const stripItems = [...musicItems, ...other]
+
+  if (archive) {
+    const musicBlock = stripItems.length
+      ? `
+      <section class="video-series" id="series-music-videos" data-series="music-video">
+        <header class="video-series-head">
+          <p class="video-series-kicker">Reel 01</p>
+          <h3 class="video-series-title">Music Videos</h3>
+          <p class="video-series-note">Official cuts and promo frames - click a cell to watch.</p>
+        </header>
+        <div class="film-strip" data-chamber="video" aria-label="Music video film strip">
+          <div class="film-sprockets film-sprockets-left" aria-hidden="true"></div>
+          <div class="film-frames">${stripItems.map((item, i) => filmFrameHtml(item, i)).join('')}</div>
+          <div class="film-sprockets film-sprockets-right" aria-hidden="true"></div>
+        </div>
+      </section>`
+      : ''
+
+    const cbcBlock = cbcItems.length
+      ? `
+      <section class="video-series cbc-desk" id="series-cbc-news" data-series="cbc-news">
+        <header class="video-series-head">
+          <p class="video-series-kicker">Press wire</p>
+          <h3 class="video-series-title">CBC News</h3>
+          <p class="video-series-note">Published work with CBC Calgary - article, audio, and broadcast.</p>
+        </header>
+        <div class="cbc-grid">${cbcItems.map((item) => cbcCardHtml(item)).join('')}</div>
+      </section>`
+      : ''
+
+    archive.innerHTML = `
+      <nav class="video-series-nav" aria-label="Video series">
+        ${stripItems.length ? `<a class="video-series-jump" href="#series-music-videos"><span class="video-series-jump-num">01</span><span class="video-series-jump-label">Music Videos</span></a>` : ''}
+        ${cbcItems.length ? `<a class="video-series-jump" href="#series-cbc-news"><span class="video-series-jump-num">02</span><span class="video-series-jump-label">CBC News</span></a>` : ''}
+      </nav>
+      ${musicBlock}
+      ${cbcBlock}`
+
+    archive.querySelectorAll<HTMLAnchorElement>('.video-series-jump').forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault()
+        const id = link.getAttribute('href')?.replace(/^#/, '')
+        if (!id) return
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    })
+    return
+  }
+
+  const frames = root.querySelector('.film-frames')
+  if (!frames) return
+  frames.innerHTML = items.map((item, i) => filmFrameHtml(item, i)).join('')
 }
 
 function printHtml(item: ManifestItem, index: number): string {
@@ -213,13 +323,6 @@ async function loadScriptPreview(item: ManifestItem): Promise<string[]> {
   } catch {
     return [item.title]
   }
-}
-
-function hydrateFilm(root: HTMLElement, items: ManifestItem[]): void {
-  if (!items.length) return
-  const frames = root.querySelector('.film-frames')
-  if (!frames) return
-  frames.innerHTML = items.map((item, i) => filmFrameHtml(item, i)).join('')
 }
 
 function hydrateMusic(root: HTMLElement, items: ManifestItem[]): void {
