@@ -34,6 +34,8 @@ export class TabletChamber {
     if (keyed?.length) {
       lines.forEach((line) => (line as HTMLElement).classList.remove('speak'))
       keyed.forEach((line) => (line as HTMLElement).classList.add('speak'))
+      const first = keyed[0] as HTMLElement
+      first.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
     } else {
       const target = PLACEHOLDER_LINES[key]
       lines.forEach((line) => {
@@ -43,11 +45,9 @@ export class TabletChamber {
       })
     }
 
-    if (this.scroll) {
-      this.scroll.scrollTop = Math.min(
-        this.scroll.scrollHeight,
-        this.scroll.scrollTop + 24,
-      )
+    const href = btn.dataset.scriptHref
+    if (href) {
+      window.open(href, '_blank', 'noopener,noreferrer')
     }
   }
 }

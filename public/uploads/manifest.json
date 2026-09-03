@@ -1,6 +1,26 @@
 {
   "items": [
     {
+      "id": "script-01",
+      "type": "script",
+      "title": "The Butterfly Effect",
+      "path": "/uploads/script/the-butterfly-effect.pdf",
+      "mime": "application/pdf",
+      "originalName": "The Butterfly Effect.pdf",
+      "subtitle": "Feature manuscript",
+      "createdAt": "2026-09-03T04:50:00.000Z"
+    },
+    {
+      "id": "script-02",
+      "type": "script",
+      "title": "DewDrop",
+      "path": "/uploads/script/dewdrop.pdf",
+      "mime": "application/pdf",
+      "originalName": "DewDrop.pdf",
+      "subtitle": "Short manuscript",
+      "createdAt": "2026-09-03T04:50:00.000Z"
+    },
+    {
       "id": "video-mv-01",
       "type": "video",
       "title": "Quarantine Nights in Downtown Calgary",

@@ -383,11 +383,33 @@ function hydratePhoto(root: HTMLElement, items: ManifestItem[]): void {
 }
 
 async function loadScriptPreview(item: ManifestItem): Promise<string[]> {
+  const isPdf =
+    item.mime === 'application/pdf' ||
+    /\.pdf$/i.test(item.path) ||
+    /\.pdf$/i.test(item.originalName || '')
+
+  if (isPdf) {
+    return [
+      `◇ ${item.title.toUpperCase()}`,
+      '☰ MANUSCRIPT · sealed as PDF',
+      item.subtitle ? `彡 ${item.subtitle}` : '彡 FULL TEXT · open the scroll',
+      '···· pages bound in light ····',
+    ]
+  }
+
   try {
     const res = await fetch(item.path)
     if (!res.ok) return [item.title]
     const text = (await res.text()).trim()
     if (!text) return [item.title]
+    // Binary PDF mistaken as text — avoid dumping garbage into the tablet
+    if (text.startsWith('%PDF') || /[\u0000-\u0008]/.test(text.slice(0, 200))) {
+      return [
+        `◇ ${item.title.toUpperCase()}`,
+        '☰ MANUSCRIPT · sealed as PDF',
+        '彡 FULL TEXT · open the scroll',
+      ]
+    }
     const lines = text
       .split(/\r?\n/)
       .map((l) => l.trim())
@@ -419,10 +441,17 @@ async function hydrateScripts(root: HTMLElement, items: ManifestItem[]): Promise
     const item = items[i]
     const lines = await loadScriptPreview(item)
     const key = item.id
+    const isPdf =
+      item.mime === 'application/pdf' ||
+      /\.pdf$/i.test(item.path) ||
+      /\.pdf$/i.test(item.originalName || '')
+    const hrefAttr = isPdf ? ` data-script-href="${escapeHtml(item.path)}"` : ''
+    const mark = isPdf ? '☰' : '✎'
     buttons.push(`
-      <button type="button" class="tablet-inscription" data-script="${escapeHtml(key)}" data-script-title="${escapeHtml(item.title)}">
-        <span class="inscribe-mark">✎</span>
+      <button type="button" class="tablet-inscription${isPdf ? ' is-pdf' : ''}" data-script="${escapeHtml(key)}" data-script-title="${escapeHtml(item.title)}"${hrefAttr}>
+        <span class="inscribe-mark">${mark}</span>
         <span class="altar-label">${escapeHtml(item.title)}</span>
+        ${isPdf ? '<span class="altar-sub">Open PDF</span>' : ''}
       </button>`)
     for (const line of lines.slice(0, 6)) {
       allLines.push(

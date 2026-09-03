@@ -21,6 +21,7 @@ public/uploads/script/*
 !public/uploads/**/.gitkeep
 !public/uploads/photo/*.{jpg,jpeg,png,webp,gif}
 !public/uploads/video/*.{jpg,jpeg,png,webp,gif}
+!public/uploads/script/*.{txt,md,pdf}
 
 # Editor directories and files
 .vscode/*
