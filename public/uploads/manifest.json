@@ -1,30 +1,6 @@
 {
   "items": [
     {
-      "id": "script-01",
-      "type": "script",
-      "title": "The Butterfly Effect",
-      "path": "/uploads/script/the-butterfly-effect.pdf",
-      "mime": "application/pdf",
-      "originalName": "The Butterfly Effect.pdf",
-      "subtitle": "Feature spec script",
-      "createdAt": "2026-09-03T04:50:00.000Z",
-      "category": "spec-script",
-      "categoryLabel": "Spec Scripts"
-    },
-    {
-      "id": "script-02",
-      "type": "script",
-      "title": "DewDrop",
-      "path": "/uploads/script/dewdrop.pdf",
-      "mime": "application/pdf",
-      "originalName": "DewDrop.pdf",
-      "subtitle": "Short spec script",
-      "createdAt": "2026-09-03T04:50:00.000Z",
-      "category": "spec-script",
-      "categoryLabel": "Spec Scripts"
-    },
-    {
       "id": "video-mv-01",
       "type": "video",
       "title": "Quarantine Nights in Downtown Calgary",
@@ -125,6 +101,30 @@
       "categoryLabel": "CBC News",
       "createdAt": "2024-06-10T11:00:00.000Z",
       "thumb": "/uploads/video/cbc-autism-art-voice.jpg"
+    },
+    {
+      "id": "script-01",
+      "type": "script",
+      "title": "The Butterfly Effect",
+      "path": "/uploads/script/the-butterfly-effect.pdf",
+      "mime": "application/pdf",
+      "originalName": "The Butterfly Effect.pdf",
+      "subtitle": "Feature spec script",
+      "createdAt": "2026-09-03T04:50:00.000Z",
+      "category": "spec-script",
+      "categoryLabel": "Spec Scripts"
+    },
+    {
+      "id": "script-02",
+      "type": "script",
+      "title": "DewDrop",
+      "path": "/uploads/script/dewdrop.pdf",
+      "mime": "application/pdf",
+      "originalName": "DewDrop.pdf",
+      "subtitle": "Short spec script",
+      "createdAt": "2026-09-03T04:50:00.000Z",
+      "category": "spec-script",
+      "categoryLabel": "Spec Scripts"
     },
     {
       "id": "photo-18",
@@ -402,6 +402,17 @@
       "categoryLabel": "Urban Geometry"
     },
     {
+      "id": "photo-34",
+      "type": "photo",
+      "title": "Urban Cavalry",
+      "path": "/uploads/photo/urban-cavalry.jpg",
+      "mime": "image/jpeg",
+      "originalName": "urban-cavalry.jpg",
+      "createdAt": "2026-09-03T05:42:25.021Z",
+      "category": "urban",
+      "categoryLabel": "Urban Geometry"
+    },
+    {
       "id": "photo-29",
       "type": "photo",
       "title": "Banquet Assembly",
@@ -475,6 +486,17 @@
       "mime": "image/jpeg",
       "createdAt": "2026-09-03T02:21:50.000Z",
       "originalName": "mallard-passage.jpg",
+      "category": "nature",
+      "categoryLabel": "Natural Frame"
+    },
+    {
+      "id": "photo-35",
+      "type": "photo",
+      "title": "Winter Stones",
+      "path": "/uploads/photo/winter-stones.jpg",
+      "mime": "image/jpeg",
+      "originalName": "winter-stones.jpg",
+      "createdAt": "2026-09-03T05:42:25.021Z",
       "category": "nature",
       "categoryLabel": "Natural Frame"
     },
