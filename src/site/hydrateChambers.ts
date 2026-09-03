@@ -155,7 +155,7 @@ const VIDEO_SERIES: { key: string; label: string; note: string; kicker: string }
   {
     key: 'cbc-news',
     label: 'CBC News',
-    note: 'Published work with CBC Calgary - article, audio, and broadcast.',
+    note: 'Published CBC Calgary work - framed through the news camera lens.',
     kicker: 'Press wire',
   },
 ]
