@@ -8,8 +8,8 @@
       "externalUrl": "https://www.youtube.com/watch?v=qt0IWdNC9uo",
       "provider": "youtube",
       "youtubeId": "qt0IWdNC9uo",
-      "category": "music-video",
-      "categoryLabel": "Music Videos",
+      "category": "urban-video",
+      "categoryLabel": "Urban Videography",
       "createdAt": "2026-09-03T04:30:00.000Z"
     },
     {
@@ -20,8 +20,8 @@
       "externalUrl": "https://www.youtube.com/watch?v=Goz0E8zFTd8",
       "provider": "youtube",
       "youtubeId": "Goz0E8zFTd8",
-      "category": "music-video",
-      "categoryLabel": "Music Videos",
+      "category": "event-video",
+      "categoryLabel": "Event Videography",
       "createdAt": "2026-09-03T04:30:00.000Z"
     },
     {
@@ -76,7 +76,7 @@
       "id": "video-cbc-01",
       "type": "video",
       "title": "Ancient artifacts - Calgary residents co-create cultural exhibits with the Glenbow Museum",
-      "path": "https://www.cbc.ca/news/canada/calgary/ethiopian-glenbow-museum-community-1.7225322",
+      "path": "/uploads/video/cbc-glenbow-artifacts.jpg",
       "externalUrl": "https://www.cbc.ca/news/canada/calgary/ethiopian-glenbow-museum-community-1.7225322",
       "provider": "cbc",
       "mime": "text/html",
@@ -84,13 +84,14 @@
       "credit": "Levi Zigza with Elise Stolte - CBC Calgary",
       "category": "cbc-news",
       "categoryLabel": "CBC News",
-      "createdAt": "2024-06-10T11:00:00.000Z"
+      "createdAt": "2024-06-10T11:00:00.000Z",
+      "thumb": "/uploads/video/cbc-glenbow-artifacts.jpg"
     },
     {
       "id": "video-cbc-02",
       "type": "video",
       "title": "Young Calgary man with autism finds voice through sharing art",
-      "path": "https://www.cbc.ca/player/play/video/1.7151103",
+      "path": "/uploads/video/cbc-autism-art-voice.jpg",
       "externalUrl": "https://www.cbc.ca/player/play/video/1.7151103",
       "provider": "cbc",
       "mime": "video/cbc",
@@ -98,7 +99,8 @@
       "credit": "CBC Calgary",
       "category": "cbc-news",
       "categoryLabel": "CBC News",
-      "createdAt": "2024-06-10T11:00:00.000Z"
+      "createdAt": "2024-06-10T11:00:00.000Z",
+      "thumb": "/uploads/video/cbc-autism-art-voice.jpg"
     },
     {
       "id": "photo-18",

@@ -29,6 +29,8 @@ export type ManifestItem = {
   youtubeId?: string
   subtitle?: string
   credit?: string
+  /** Optional poster / card thumbnail (local path or absolute URL) */
+  thumb?: string
 }
 
 export type Manifest = {
@@ -39,7 +41,9 @@ const EMPTY: Manifest = { items: [] }
 
 function normalizeItem(item: ManifestItem): ManifestItem {
   const path = /^https?:\/\//i.test(item.path) ? item.path : withBase(item.path)
-  return { ...item, path }
+  const thumb =
+    item.thumb && !/^https?:\/\//i.test(item.thumb) ? withBase(item.thumb) : item.thumb
+  return { ...item, path, thumb }
 }
 
 function parseManifest(data: unknown): Manifest | null {

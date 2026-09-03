@@ -100,12 +100,16 @@ function cbcCardHtml(item: ManifestItem): string {
     item.subtitle ||
     (kind === 'article' ? 'Article + audio' : kind === 'video' ? 'Broadcast video' : 'CBC News')
   const href = escapeHtml(item.externalUrl || item.path)
-  return `
-    <a class="cbc-card cbc-card-${kind}" href="${href}" target="_blank" rel="noopener noreferrer">
-      <div class="cbc-card-mark">
+  const thumb = item.thumb || ''
+  const thumbHtml = thumb
+    ? `<div class="cbc-card-thumb"><img src="${escapeHtml(thumb)}" alt="" loading="lazy" /></div>`
+    : `<div class="cbc-card-mark">
         <span class="cbc-wordmark">CBC</span>
         <span class="cbc-wordmark-sub">News</span>
-      </div>
+      </div>`
+  return `
+    <a class="cbc-card cbc-card-${kind}${thumb ? ' has-thumb' : ''}" href="${href}" target="_blank" rel="noopener noreferrer">
+      ${thumbHtml}
       <div class="cbc-card-body">
         <p class="cbc-card-kicker">${escapeHtml(formatLabel)}</p>
         <h4 class="cbc-card-title">${escapeHtml(item.title)}</h4>
@@ -115,66 +119,136 @@ function cbcCardHtml(item: ManifestItem): string {
     </a>`
 }
 
+const VIDEO_SERIES: { key: string; label: string; note: string; kicker: string }[] = [
+  {
+    key: 'music-video',
+    label: 'Music Videos',
+    note: 'Official cuts and promo frames - click a cell to watch.',
+    kicker: 'Reel',
+  },
+  {
+    key: 'event-video',
+    label: 'Event Videography',
+    note: 'Live energy, stages, and rooms in motion.',
+    kicker: 'Reel',
+  },
+  {
+    key: 'urban-video',
+    label: 'Urban Videography',
+    note: 'City streets, downtown nights, and the pulse between blocks.',
+    kicker: 'Reel',
+  },
+  {
+    key: 'cbc-news',
+    label: 'CBC News',
+    note: 'Published work with CBC Calgary - article, audio, and broadcast.',
+    kicker: 'Press wire',
+  },
+]
+
+function filmStripBlock(label: string, items: ManifestItem[], startIndex: number): string {
+  return `
+    <div class="film-strip" data-chamber="video" aria-label="${escapeHtml(label)} film strip">
+      <div class="film-sprockets film-sprockets-left" aria-hidden="true"></div>
+      <div class="film-frames">${items.map((item, i) => filmFrameHtml(item, startIndex + i)).join('')}</div>
+      <div class="film-sprockets film-sprockets-right" aria-hidden="true"></div>
+    </div>`
+}
+
 function hydrateFilm(root: HTMLElement, items: ManifestItem[]): void {
   if (!items.length) return
 
   const archive = root.querySelector('#video-archive')
-  const musicItems = items.filter((i) => (i.category || 'music-video') === 'music-video')
-  const cbcItems = items.filter((i) => i.category === 'cbc-news')
-  const other = items.filter((i) => i.category && i.category !== 'music-video' && i.category !== 'cbc-news')
-  const stripItems = [...musicItems, ...other]
-
-  if (archive) {
-    const musicBlock = stripItems.length
-      ? `
-      <section class="video-series" id="series-music-videos" data-series="music-video">
-        <header class="video-series-head">
-          <p class="video-series-kicker">Reel 01</p>
-          <h3 class="video-series-title">Music Videos</h3>
-          <p class="video-series-note">Official cuts and promo frames - click a cell to watch.</p>
-        </header>
-        <div class="film-strip" data-chamber="video" aria-label="Music video film strip">
-          <div class="film-sprockets film-sprockets-left" aria-hidden="true"></div>
-          <div class="film-frames">${stripItems.map((item, i) => filmFrameHtml(item, i)).join('')}</div>
-          <div class="film-sprockets film-sprockets-right" aria-hidden="true"></div>
-        </div>
-      </section>`
-      : ''
-
-    const cbcBlock = cbcItems.length
-      ? `
-      <section class="video-series cbc-desk" id="series-cbc-news" data-series="cbc-news">
-        <header class="video-series-head">
-          <p class="video-series-kicker">Press wire</p>
-          <h3 class="video-series-title">CBC News</h3>
-          <p class="video-series-note">Published work with CBC Calgary - article, audio, and broadcast.</p>
-        </header>
-        <div class="cbc-grid">${cbcItems.map((item) => cbcCardHtml(item)).join('')}</div>
-      </section>`
-      : ''
-
-    archive.innerHTML = `
-      <nav class="video-series-nav" aria-label="Video series">
-        ${stripItems.length ? `<a class="video-series-jump" href="#series-music-videos"><span class="video-series-jump-num">01</span><span class="video-series-jump-label">Music Videos</span></a>` : ''}
-        ${cbcItems.length ? `<a class="video-series-jump" href="#series-cbc-news"><span class="video-series-jump-num">02</span><span class="video-series-jump-label">CBC News</span></a>` : ''}
-      </nav>
-      ${musicBlock}
-      ${cbcBlock}`
-
-    archive.querySelectorAll<HTMLAnchorElement>('.video-series-jump').forEach((link) => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault()
-        const id = link.getAttribute('href')?.replace(/^#/, '')
-        if (!id) return
-        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      })
-    })
+  if (!archive) {
+    const frames = root.querySelector('.film-frames')
+    if (!frames) return
+    frames.innerHTML = items.map((item, i) => filmFrameHtml(item, i)).join('')
     return
   }
 
-  const frames = root.querySelector('.film-frames')
-  if (!frames) return
-  frames.innerHTML = items.map((item, i) => filmFrameHtml(item, i)).join('')
+  const buckets = new Map<string, ManifestItem[]>()
+  for (const item of items) {
+    const key = item.category || 'music-video'
+    const list = buckets.get(key) ?? []
+    list.push(item)
+    buckets.set(key, list)
+  }
+
+  const sections: string[] = []
+  const navBits: string[] = []
+  let reelNum = 0
+  let frameIndex = 0
+
+  for (const series of VIDEO_SERIES) {
+    const list = buckets.get(series.key)
+    if (!list?.length) continue
+    buckets.delete(series.key)
+    reelNum++
+    const num = String(reelNum).padStart(2, '0')
+    const id = `series-${series.key}`
+    navBits.push(
+      `<a class="video-series-jump" href="#${id}"><span class="video-series-jump-num">${num}</span><span class="video-series-jump-label">${escapeHtml(series.label)}</span></a>`,
+    )
+
+    if (series.key === 'cbc-news') {
+      sections.push(`
+        <section class="video-series cbc-desk" id="${id}" data-series="${series.key}">
+          <header class="video-series-head">
+            <p class="video-series-kicker">${escapeHtml(series.kicker)}</p>
+            <h3 class="video-series-title">${escapeHtml(series.label)}</h3>
+            <p class="video-series-note">${escapeHtml(series.note)}</p>
+          </header>
+          <div class="cbc-grid">${list.map((item) => cbcCardHtml(item)).join('')}</div>
+        </section>`)
+    } else {
+      const strip = filmStripBlock(series.label, list, frameIndex)
+      frameIndex += list.length
+      sections.push(`
+        <section class="video-series" id="${id}" data-series="${series.key}">
+          <header class="video-series-head">
+            <p class="video-series-kicker">${escapeHtml(series.kicker)} ${num}</p>
+            <h3 class="video-series-title">${escapeHtml(series.label)}</h3>
+            <p class="video-series-note">${escapeHtml(series.note)}</p>
+          </header>
+          ${strip}
+        </section>`)
+    }
+  }
+
+  // Any leftover categories still render as film strips
+  for (const [key, list] of buckets) {
+    if (!list.length) continue
+    reelNum++
+    const num = String(reelNum).padStart(2, '0')
+    const label = list[0].categoryLabel || key
+    const id = `series-${escapeHtml(key)}`
+    navBits.push(
+      `<a class="video-series-jump" href="#${id}"><span class="video-series-jump-num">${num}</span><span class="video-series-jump-label">${escapeHtml(label)}</span></a>`,
+    )
+    const strip = filmStripBlock(label, list, frameIndex)
+    frameIndex += list.length
+    sections.push(`
+      <section class="video-series" id="${id}" data-series="${escapeHtml(key)}">
+        <header class="video-series-head">
+          <p class="video-series-kicker">Reel ${num}</p>
+          <h3 class="video-series-title">${escapeHtml(label)}</h3>
+        </header>
+        ${strip}
+      </section>`)
+  }
+
+  archive.innerHTML = `
+    <nav class="video-series-nav" aria-label="Video series">${navBits.join('')}</nav>
+    ${sections.join('')}`
+
+  archive.querySelectorAll<HTMLAnchorElement>('.video-series-jump').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault()
+      const id = link.getAttribute('href')?.replace(/^#/, '')
+      if (!id) return
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  })
 }
 
 function printHtml(item: ManifestItem, index: number): string {
