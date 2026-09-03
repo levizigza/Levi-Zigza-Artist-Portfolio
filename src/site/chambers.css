@@ -989,12 +989,90 @@
   box-shadow: 0 0 12px rgba(220, 50, 40, 0.35);
 }
 
+.photo-archive {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding-top: 1.25rem;
+}
+
+.photo-series-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.85rem;
+  margin: 0 0 2rem;
+  padding: 0.35rem 0 1rem;
+  border-bottom: 1px solid rgba(220, 80, 50, 0.22);
+}
+
+.photo-series-jump {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  text-decoration: none;
+  color: rgba(255, 190, 170, 0.72);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid transparent;
+  transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.photo-series-jump:hover,
+.photo-series-jump:focus-visible {
+  color: #ffc8b4;
+  border-bottom-color: rgba(255, 120, 80, 0.55);
+  outline: none;
+}
+
+.photo-series-jump-num {
+  color: rgba(224, 80, 64, 0.85);
+}
+
+.photo-series {
+  margin: 0 0 2.75rem;
+  scroll-margin-top: 5.5rem;
+}
+
+.photo-series-head {
+  margin: 0 0 1.35rem;
+  max-width: 34rem;
+}
+
+.photo-series-kicker {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(224, 100, 70, 0.8);
+}
+
+.photo-series-title {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-display, var(--font-serif, Georgia, serif));
+  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #ffd2c4;
+}
+
+.photo-series-note {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: rgba(255, 210, 195, 0.62);
+}
+
 .hanging-prints {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1.5rem;
-  padding-top: 1.75rem;
-  max-width: 720px;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 1.35rem 1.15rem;
+  padding-top: 0.85rem;
+  max-width: none;
 }
 
 .print-clip {
@@ -1004,15 +1082,31 @@
   flex-direction: column;
   align-items: center;
   gap: 0.65rem;
+  cursor: zoom-in;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  text-align: center;
   animation: print-sway 5.5s ease-in-out infinite;
+}
+
+.print-clip.has-media {
+  animation-duration: 7.5s;
 }
 
 .print-clip:nth-child(2) { animation-delay: -1.2s; animation-duration: 6.2s; }
 .print-clip:nth-child(3) { animation-delay: -2.4s; animation-duration: 5.8s; }
+.print-clip:nth-child(4n) { animation-delay: -0.8s; }
+.print-clip:nth-child(4n + 1) { animation-delay: -2.1s; }
 
 @keyframes print-sway {
-  0%, 100% { transform: rotate(-1.5deg) translateY(0); }
-  50% { transform: rotate(1.8deg) translateY(4px); }
+  0%, 100% { transform: rotate(-1.1deg) translateY(0); }
+  50% { transform: rotate(1.3deg) translateY(3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .print-clip { animation: none; }
 }
 
 .print-clip::before {
@@ -1043,6 +1137,19 @@
   filter: saturate(0.9) brightness(0.92);
 }
 
+.print-clip.has-media:hover .print-sheet,
+.print-clip.has-media:focus-visible .print-sheet {
+  filter: saturate(1.15) brightness(1.08);
+  box-shadow:
+    0 14px 36px rgba(220, 60, 40, 0.32),
+    inset 0 0 36px rgba(255, 100, 60, 0.16);
+  transform: scale(1.03);
+}
+
+.print-clip.has-media:focus-visible {
+  outline: none;
+}
+
 .print-media {
   position: absolute;
   inset: 6%;
@@ -1050,7 +1157,7 @@
   height: 88%;
   object-fit: cover;
   z-index: 1;
-  filter: sepia(0.15) contrast(1.05);
+  filter: sepia(0.12) contrast(1.05);
 }
 
 .print-clip.has-media .print-emulsion,
@@ -1126,6 +1233,143 @@
 .site[data-chamber="photography"] .planet-sky,
 .site[data-chamber="photography"] .site-nebula {
   filter: hue-rotate(-8deg) saturate(1.15);
+}
+
+/* Full-plate lightbox */
+.photo-lightbox {
+  padding: 0;
+  border: 0;
+  max-width: none;
+  max-height: none;
+  width: min(96vw, 1200px);
+  background: transparent;
+  color: #ffe8df;
+}
+
+.photo-lightbox::backdrop {
+  background: rgba(8, 2, 2, 0.88);
+  backdrop-filter: blur(8px);
+}
+
+.photo-lightbox-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: min(86vh, 900px);
+  padding: 3.25rem 3.5rem 4.5rem;
+}
+
+.photo-lightbox-img {
+  display: block;
+  max-width: min(88vw, 1080px);
+  max-height: min(78vh, 820px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 140, 110, 0.22);
+  background: #120606;
+}
+
+.photo-lightbox-meta {
+  position: absolute;
+  left: 1.25rem;
+  right: 1.25rem;
+  bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  pointer-events: none;
+}
+
+.photo-lightbox-title {
+  margin: 0;
+  font-family: var(--font-display, var(--font-serif, Georgia, serif));
+  font-size: clamp(0.95rem, 1.8vw, 1.2rem);
+  letter-spacing: 0.02em;
+  color: #ffd8cc;
+}
+
+.photo-lightbox-count {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  color: rgba(255, 180, 160, 0.7);
+}
+
+.photo-lightbox-close {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  z-index: 2;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid rgba(255, 140, 110, 0.35);
+  border-radius: 0;
+  background: rgba(30, 8, 6, 0.75);
+  color: #ffd0c0;
+  font-size: 1.45rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.photo-lightbox-close:hover {
+  background: rgba(80, 20, 14, 0.9);
+}
+
+.photo-lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 2.6rem;
+  height: 2.6rem;
+  border: 1px solid rgba(255, 140, 110, 0.3);
+  background: rgba(24, 6, 5, 0.72);
+  color: #ffd8cc;
+  font-size: 1.7rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.photo-lightbox-nav.prev { left: 0.25rem; }
+.photo-lightbox-nav.next { right: 0.25rem; }
+
+.photo-lightbox-nav:hover {
+  background: rgba(90, 24, 16, 0.88);
+}
+
+html.lightbox-open {
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .photo-lightbox-frame {
+    padding: 2.75rem 0.75rem 3.75rem;
+  }
+
+  .photo-lightbox-nav {
+    top: auto;
+    bottom: 0.35rem;
+    transform: none;
+  }
+
+  .photo-lightbox-nav.prev { left: 0.75rem; }
+  .photo-lightbox-nav.next { right: 0.75rem; }
+
+  .photo-lightbox-meta {
+    bottom: 3.1rem;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .hanging-prints {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.1rem 0.75rem;
+  }
 }
 
 /* ——— Technovate / Neptune — live web chamber ——— */

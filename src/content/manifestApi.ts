@@ -20,6 +20,9 @@ export type ManifestItem = {
   mime?: string
   createdAt: string
   originalName?: string
+  /** Photo archive series key, e.g. chromatic / portraiture */
+  category?: string
+  categoryLabel?: string
 }
 
 export type Manifest = {

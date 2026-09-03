@@ -1,94 +1,15 @@
 ﻿{
   "items": [
     {
-      "id": "photo-13",
-      "type": "photo",
-      "title": "Mural Stripes",
-      "path": "/uploads/photo/mural-stripes.jpg",
-      "mime": "image/jpeg",
-      "createdAt": "2026-09-03T04:09:00.000Z",
-      "originalName": "mural-stripes.jpg"
-    },
-    {
-      "id": "photo-14",
-      "type": "photo",
-      "title": "Shaft of Light",
-      "path": "/uploads/photo/shaft-of-light.jpg",
-      "mime": "image/jpeg",
-      "createdAt": "2026-09-03T04:09:00.000Z",
-      "originalName": "shaft-of-light.jpg"
-    },
-    {
-      "id": "photo-15",
-      "type": "photo",
-      "title": "Harvest Canopy",
-      "path": "/uploads/photo/harvest-canopy.jpg",
-      "mime": "image/jpeg",
-      "createdAt": "2026-09-03T04:09:00.000Z",
-      "originalName": "harvest-canopy.jpg"
-    },
-    {
-      "id": "photo-16",
-      "type": "photo",
-      "title": "Window Bouquet",
-      "path": "/uploads/photo/window-bouquet.jpg",
-      "mime": "image/jpeg",
-      "createdAt": "2026-09-03T04:09:00.000Z",
-      "originalName": "window-bouquet.jpg"
-    },
-    {
-      "id": "photo-17",
-      "type": "photo",
-      "title": "Neon Spectrum",
-      "path": "/uploads/photo/neon-spectrum.jpg",
-      "mime": "image/jpeg",
-      "createdAt": "2026-09-03T04:09:00.000Z",
-      "originalName": "neon-spectrum.jpg"
-    },
-    {
       "id": "photo-18",
       "type": "photo",
       "title": "Dual Glow",
       "path": "/uploads/photo/dual-glow.jpg",
       "mime": "image/jpeg",
       "createdAt": "2026-09-03T04:09:00.000Z",
-      "originalName": "dual-glow.jpg"
-    },
-    {
-      "id": "photo-19",
-      "type": "photo",
-      "title": "Red Blue Recline",
-      "path": "/uploads/photo/red-blue-recline.jpg",
-      "mime": "image/jpeg",
-      "createdAt": "2026-09-03T04:09:00.000Z",
-      "originalName": "red-blue-recline.jpg"
-    },
-    {
-      "id": "photo-20",
-      "type": "photo",
-      "title": "Mirrored Neon",
-      "path": "/uploads/photo/mirrored-neon.jpg",
-      "mime": "image/jpeg",
-      "createdAt": "2026-09-03T04:09:00.000Z",
-      "originalName": "mirrored-neon.jpg"
-    },
-    {
-      "id": "photo-21",
-      "type": "photo",
-      "title": "Grass Field",
-      "path": "/uploads/photo/grass-field.jpg",
-      "mime": "image/jpeg",
-      "createdAt": "2026-09-03T04:09:00.000Z",
-      "originalName": "grass-field.jpg"
-    },
-    {
-      "id": "photo-22",
-      "type": "photo",
-      "title": "Party Defiance",
-      "path": "/uploads/photo/party-defiance.jpg",
-      "mime": "image/jpeg",
-      "createdAt": "2026-09-03T04:09:00.000Z",
-      "originalName": "party-defiance.jpg"
+      "originalName": "dual-glow.jpg",
+      "category": "chromatic",
+      "categoryLabel": "Chromatic Studies"
     },
     {
       "id": "photo-23",
@@ -97,7 +18,9 @@
       "path": "/uploads/photo/ivy-pillar.jpg",
       "mime": "image/jpeg",
       "createdAt": "2026-09-03T04:09:00.000Z",
-      "originalName": "ivy-pillar.jpg"
+      "originalName": "ivy-pillar.jpg",
+      "category": "chromatic",
+      "categoryLabel": "Chromatic Studies"
     },
     {
       "id": "photo-24",
@@ -106,25 +29,53 @@
       "path": "/uploads/photo/gemstone-profile.jpg",
       "mime": "image/jpeg",
       "createdAt": "2026-09-03T04:09:00.000Z",
-      "originalName": "gemstone-profile.jpg"
+      "originalName": "gemstone-profile.jpg",
+      "category": "chromatic",
+      "categoryLabel": "Chromatic Studies"
     },
     {
-      "id": "photo-01",
+      "id": "photo-20",
       "type": "photo",
-      "title": "Gathering Glance",
-      "path": "/uploads/photo/gathering-glance.jpg",
+      "title": "Mirrored Neon",
+      "path": "/uploads/photo/mirrored-neon.jpg",
       "mime": "image/jpeg",
-      "createdAt": "2026-09-03T02:21:50.000Z",
-      "originalName": "gathering-glance.jpg"
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "mirrored-neon.jpg",
+      "category": "chromatic",
+      "categoryLabel": "Chromatic Studies"
     },
     {
-      "id": "photo-02",
+      "id": "photo-19",
       "type": "photo",
-      "title": "Table Light",
-      "path": "/uploads/photo/table-light.jpg",
+      "title": "Red Blue Recline",
+      "path": "/uploads/photo/red-blue-recline.jpg",
       "mime": "image/jpeg",
-      "createdAt": "2026-09-03T02:21:50.000Z",
-      "originalName": "table-light.jpg"
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "red-blue-recline.jpg",
+      "category": "chromatic",
+      "categoryLabel": "Chromatic Studies"
+    },
+    {
+      "id": "photo-22",
+      "type": "photo",
+      "title": "Party Defiance",
+      "path": "/uploads/photo/party-defiance.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "party-defiance.jpg",
+      "category": "chromatic",
+      "categoryLabel": "Chromatic Studies"
+    },
+    {
+      "id": "photo-17",
+      "type": "photo",
+      "title": "Neon Spectrum",
+      "path": "/uploads/photo/neon-spectrum.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "neon-spectrum.jpg",
+      "category": "chromatic",
+      "categoryLabel": "Chromatic Studies"
     },
     {
       "id": "photo-03",
@@ -133,61 +84,97 @@
       "path": "/uploads/photo/hayley-photoshoot.jpg",
       "mime": "image/jpeg",
       "createdAt": "2026-09-03T02:21:50.000Z",
-      "originalName": "hayley-photoshoot.jpg"
+      "originalName": "hayley-photoshoot.jpg",
+      "category": "portraiture",
+      "categoryLabel": "Portraiture"
     },
     {
-      "id": "photo-04",
+      "id": "photo-13",
       "type": "photo",
-      "title": "Suspended Journey",
-      "path": "/uploads/photo/suspended-journey.jpg",
+      "title": "Mural Stripes",
+      "path": "/uploads/photo/mural-stripes.jpg",
       "mime": "image/jpeg",
-      "createdAt": "2026-09-03T02:21:50.000Z",
-      "originalName": "suspended-journey.jpg"
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "mural-stripes.jpg",
+      "category": "portraiture",
+      "categoryLabel": "Portraiture"
     },
     {
-      "id": "photo-05",
+      "id": "photo-25",
       "type": "photo",
-      "title": "Between Fingers",
-      "path": "/uploads/photo/between-fingers.jpg",
+      "title": "Formal Ascent",
+      "path": "/uploads/photo/formal-ascent.jpg",
       "mime": "image/jpeg",
-      "createdAt": "2026-09-03T02:21:50.000Z",
-      "originalName": "between-fingers.jpg"
+      "createdAt": "2026-09-03T04:15:00.000Z",
+      "originalName": "formal-ascent.jpg",
+      "category": "portraiture",
+      "categoryLabel": "Portraiture"
     },
     {
-      "id": "photo-06",
+      "id": "photo-15",
       "type": "photo",
-      "title": "Craft Burger Components",
-      "path": "/uploads/photo/craft-burger-components.jpg",
+      "title": "Harvest Canopy",
+      "path": "/uploads/photo/harvest-canopy.jpg",
       "mime": "image/jpeg",
-      "createdAt": "2026-09-03T02:21:50.000Z",
-      "originalName": "craft-burger-components.jpg"
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "harvest-canopy.jpg",
+      "category": "portraiture",
+      "categoryLabel": "Portraiture"
     },
     {
-      "id": "photo-07",
+      "id": "photo-21",
       "type": "photo",
-      "title": "Silhouette In Flight",
-      "path": "/uploads/photo/silhouette-in-flight.jpg",
+      "title": "Grass Field",
+      "path": "/uploads/photo/grass-field.jpg",
       "mime": "image/jpeg",
-      "createdAt": "2026-09-03T02:21:50.000Z",
-      "originalName": "silhouette-in-flight.jpg"
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "grass-field.jpg",
+      "category": "portraiture",
+      "categoryLabel": "Portraiture"
     },
     {
-      "id": "photo-08",
+      "id": "photo-26",
       "type": "photo",
-      "title": "Golden Wanderer",
-      "path": "/uploads/photo/golden-wanderer.jpg",
+      "title": "Blue Jacket Street",
+      "path": "/uploads/photo/blue-jacket-street.jpg",
       "mime": "image/jpeg",
-      "createdAt": "2026-09-03T02:21:50.000Z",
-      "originalName": "golden-wanderer.jpg"
+      "createdAt": "2026-09-03T04:15:00.000Z",
+      "originalName": "blue-jacket-street.jpg",
+      "category": "portraiture",
+      "categoryLabel": "Portraiture"
     },
     {
-      "id": "photo-09",
+      "id": "photo-16",
       "type": "photo",
-      "title": "Downtown Reflections - Calgary Skyline",
-      "path": "/uploads/photo/downtown-reflections-calgary.jpg",
+      "title": "Window Bouquet",
+      "path": "/uploads/photo/window-bouquet.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "window-bouquet.jpg",
+      "category": "portraiture",
+      "categoryLabel": "Portraiture"
+    },
+    {
+      "id": "photo-01",
+      "type": "photo",
+      "title": "Gathering Glance",
+      "path": "/uploads/photo/gathering-glance.jpg",
       "mime": "image/jpeg",
       "createdAt": "2026-09-03T02:21:50.000Z",
-      "originalName": "downtown-reflections-calgary.jpg"
+      "originalName": "gathering-glance.jpg",
+      "category": "portraiture",
+      "categoryLabel": "Portraiture"
+    },
+    {
+      "id": "photo-02",
+      "type": "photo",
+      "title": "Table Light",
+      "path": "/uploads/photo/table-light.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "table-light.jpg",
+      "category": "portraiture",
+      "categoryLabel": "Portraiture"
     },
     {
       "id": "photo-10",
@@ -196,16 +183,64 @@
       "path": "/uploads/photo/through-glass.jpg",
       "mime": "image/jpeg",
       "createdAt": "2026-09-03T02:21:50.000Z",
-      "originalName": "through-glass.jpg"
+      "originalName": "through-glass.jpg",
+      "category": "portraiture",
+      "categoryLabel": "Portraiture"
     },
     {
-      "id": "photo-11",
+      "id": "photo-05",
       "type": "photo",
-      "title": "Mallard Passage",
-      "path": "/uploads/photo/mallard-passage.jpg",
+      "title": "Between Fingers",
+      "path": "/uploads/photo/between-fingers.jpg",
       "mime": "image/jpeg",
       "createdAt": "2026-09-03T02:21:50.000Z",
-      "originalName": "mallard-passage.jpg"
+      "originalName": "between-fingers.jpg",
+      "category": "portraiture",
+      "categoryLabel": "Portraiture"
+    },
+    {
+      "id": "photo-04",
+      "type": "photo",
+      "title": "Suspended Journey",
+      "path": "/uploads/photo/suspended-journey.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "suspended-journey.jpg",
+      "category": "urban",
+      "categoryLabel": "Urban Geometry"
+    },
+    {
+      "id": "photo-14",
+      "type": "photo",
+      "title": "Shaft of Light",
+      "path": "/uploads/photo/shaft-of-light.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "shaft-of-light.jpg",
+      "category": "urban",
+      "categoryLabel": "Urban Geometry"
+    },
+    {
+      "id": "photo-27",
+      "type": "photo",
+      "title": "Glass Undulation",
+      "path": "/uploads/photo/glass-undulation.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:15:00.000Z",
+      "originalName": "glass-undulation.jpg",
+      "category": "urban",
+      "categoryLabel": "Urban Geometry"
+    },
+    {
+      "id": "photo-09",
+      "type": "photo",
+      "title": "Downtown Reflections - Calgary Skyline",
+      "path": "/uploads/photo/downtown-reflections-calgary.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "downtown-reflections-calgary.jpg",
+      "category": "urban",
+      "categoryLabel": "Urban Geometry"
     },
     {
       "id": "photo-12",
@@ -214,7 +249,119 @@
       "path": "/uploads/photo/construction-gold.jpg",
       "mime": "image/jpeg",
       "createdAt": "2026-09-03T02:21:50.000Z",
-      "originalName": "construction-gold.jpg"
+      "originalName": "construction-gold.jpg",
+      "category": "urban",
+      "categoryLabel": "Urban Geometry"
+    },
+    {
+      "id": "photo-08",
+      "type": "photo",
+      "title": "Golden Wanderer",
+      "path": "/uploads/photo/golden-wanderer.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "golden-wanderer.jpg",
+      "category": "urban",
+      "categoryLabel": "Urban Geometry"
+    },
+    {
+      "id": "photo-28",
+      "type": "photo",
+      "title": "Do Dope Shit",
+      "path": "/uploads/photo/do-dope-shit.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:15:00.000Z",
+      "originalName": "do-dope-shit.jpg",
+      "category": "urban",
+      "categoryLabel": "Urban Geometry"
+    },
+    {
+      "id": "photo-29",
+      "type": "photo",
+      "title": "Banquet Assembly",
+      "path": "/uploads/photo/banquet-assembly.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:15:00.000Z",
+      "originalName": "banquet-assembly.jpg",
+      "category": "events",
+      "categoryLabel": "Gatherings"
+    },
+    {
+      "id": "photo-30",
+      "type": "photo",
+      "title": "Red Blazer Circle",
+      "path": "/uploads/photo/red-blazer-circle.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:15:00.000Z",
+      "originalName": "red-blazer-circle.jpg",
+      "category": "events",
+      "categoryLabel": "Gatherings"
+    },
+    {
+      "id": "photo-31",
+      "type": "photo",
+      "title": "Gallery Conversation",
+      "path": "/uploads/photo/gallery-conversation.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:15:00.000Z",
+      "originalName": "gallery-conversation.jpg",
+      "category": "events",
+      "categoryLabel": "Gatherings"
+    },
+    {
+      "id": "photo-32",
+      "type": "photo",
+      "title": "Catering Laughter",
+      "path": "/uploads/photo/catering-laughter.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:15:00.000Z",
+      "originalName": "catering-laughter.jpg",
+      "category": "events",
+      "categoryLabel": "Gatherings"
+    },
+    {
+      "id": "photo-33",
+      "type": "photo",
+      "title": "Name Tag Smile",
+      "path": "/uploads/photo/name-tag-smile.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:15:00.000Z",
+      "originalName": "name-tag-smile.jpg",
+      "category": "events",
+      "categoryLabel": "Gatherings"
+    },
+    {
+      "id": "photo-07",
+      "type": "photo",
+      "title": "Silhouette In Flight",
+      "path": "/uploads/photo/silhouette-in-flight.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "silhouette-in-flight.jpg",
+      "category": "nature",
+      "categoryLabel": "Natural Frame"
+    },
+    {
+      "id": "photo-11",
+      "type": "photo",
+      "title": "Mallard Passage",
+      "path": "/uploads/photo/mallard-passage.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "mallard-passage.jpg",
+      "category": "nature",
+      "categoryLabel": "Natural Frame"
+    },
+    {
+      "id": "photo-06",
+      "type": "photo",
+      "title": "Craft Burger Components",
+      "path": "/uploads/photo/craft-burger-components.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "craft-burger-components.jpg",
+      "category": "still-life",
+      "categoryLabel": "Still Life"
     }
   ]
 }

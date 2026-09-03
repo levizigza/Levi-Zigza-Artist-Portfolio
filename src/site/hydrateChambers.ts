@@ -69,12 +69,133 @@ function filmFrameHtml(item: ManifestItem, index: number): string {
 
 function printHtml(item: ManifestItem, index: number): string {
   return `
-    <figure class="print-clip has-media" data-hold="${index}" data-id="${escapeHtml(item.id)}">
+    <figure
+      class="print-clip has-media"
+      data-hold="${index}"
+      data-id="${escapeHtml(item.id)}"
+      data-src="${escapeHtml(item.path)}"
+      data-title="${escapeHtml(item.title)}"
+      role="button"
+      tabindex="0"
+    >
       <div class="print-sheet">
         <img class="print-media" src="${escapeHtml(item.path)}" alt="${escapeHtml(item.title)}" loading="lazy" />
       </div>
       <figcaption class="altar-label">${escapeHtml(item.title)}</figcaption>
     </figure>`
+}
+
+const SERIES_ORDER = ['chromatic', 'portraiture', 'urban', 'events', 'nature', 'still-life'] as const
+
+const SERIES_META: Record<string, { label: string; note: string }> = {
+  chromatic: {
+    label: 'Chromatic Studies',
+    note: 'Saturated gels, dual-tone nights, color as subject.',
+  },
+  portraiture: {
+    label: 'Portraiture',
+    note: 'Presence, glance, and the quiet between expressions.',
+  },
+  urban: {
+    label: 'Urban Geometry',
+    note: 'Glass, steel, shadow lines carved through the city.',
+  },
+  events: {
+    label: 'Gatherings',
+    note: 'Rooms in motion - conversation, ceremony, community heat.',
+  },
+  nature: {
+    label: 'Natural Frame',
+    note: 'Wing, water, and sky held in a single beat.',
+  },
+  'still-life': {
+    label: 'Still Life',
+    note: 'Craft on the board - texture before the plate.',
+  },
+}
+
+function groupPhotos(items: ManifestItem[]): { key: string; label: string; note: string; items: ManifestItem[] }[] {
+  const buckets = new Map<string, ManifestItem[]>()
+  for (const item of items) {
+    const key = item.category || 'archive'
+    const list = buckets.get(key) ?? []
+    list.push(item)
+    buckets.set(key, list)
+  }
+
+  const ordered: { key: string; label: string; note: string; items: ManifestItem[] }[] = []
+  for (const key of SERIES_ORDER) {
+    const list = buckets.get(key)
+    if (!list?.length) continue
+    const meta = SERIES_META[key]
+    ordered.push({
+      key,
+      label: list[0].categoryLabel || meta?.label || key,
+      note: meta?.note || '',
+      items: list,
+    })
+    buckets.delete(key)
+  }
+
+  for (const [key, list] of buckets) {
+    if (!list.length) continue
+    ordered.push({
+      key,
+      label: list[0].categoryLabel || 'Archive',
+      note: '',
+      items: list,
+    })
+  }
+  return ordered
+}
+
+function hydratePhoto(root: HTMLElement, items: ManifestItem[]): void {
+  if (!items.length) return
+  const archive = root.querySelector('#photo-archive')
+  if (!archive) {
+    const hanging = root.querySelector('#hanging-prints')
+    if (!hanging) return
+    hanging.innerHTML = items.map((item, i) => printHtml(item, i)).join('')
+    return
+  }
+
+  const groups = groupPhotos(items)
+  let printIndex = 0
+
+  const nav = groups
+    .map(
+      (g, i) =>
+        `<a class="photo-series-jump" href="#series-${escapeHtml(g.key)}">
+          <span class="photo-series-jump-num">${String(i + 1).padStart(2, '0')}</span>
+          <span class="photo-series-jump-label">${escapeHtml(g.label)}</span>
+        </a>`,
+    )
+    .join('')
+
+  const sections = groups
+    .map((g, si) => {
+      const prints = g.items
+        .map((item) => {
+          const html = printHtml(item, printIndex)
+          printIndex++
+          return html
+        })
+        .join('')
+      return `
+        <section class="photo-series" id="series-${escapeHtml(g.key)}" data-series="${escapeHtml(g.key)}">
+          <header class="photo-series-head">
+            <p class="photo-series-kicker">Series ${String(si + 1).padStart(2, '0')}</p>
+            <h3 class="photo-series-title">${escapeHtml(g.label)}</h3>
+            ${g.note ? `<p class="photo-series-note">${escapeHtml(g.note)}</p>` : ''}
+          </header>
+          <div class="hanging-prints">${prints}</div>
+        </section>`
+    })
+    .join('')
+
+  archive.innerHTML = `
+    <nav class="photo-series-nav" aria-label="Photograph series">${nav}</nav>
+    ${sections}`
 }
 
 async function loadScriptPreview(item: ManifestItem): Promise<string[]> {
@@ -106,13 +227,6 @@ function hydrateMusic(root: HTMLElement, items: ManifestItem[]): void {
   const rack = root.querySelector('#cassette-rack')
   if (!rack) return
   rack.innerHTML = items.map((item, i) => cassetteHtml(item, i)).join('')
-}
-
-function hydratePhoto(root: HTMLElement, items: ManifestItem[]): void {
-  if (!items.length) return
-  const hanging = root.querySelector('#hanging-prints')
-  if (!hanging) return
-  hanging.innerHTML = items.map((item, i) => printHtml(item, i)).join('')
 }
 
 async function hydrateScripts(root: HTMLElement, items: ManifestItem[]): Promise<void> {

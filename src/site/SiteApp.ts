@@ -9,6 +9,7 @@ import { CassetteDeck } from './CassetteDeck'
 import { ChamberLife, type BeatSource } from './ChamberLife'
 import { FilmStripAudio } from './FilmStripAudio'
 import { hydrateChambers } from './hydrateChambers'
+import { PhotoLightbox } from './PhotoLightbox'
 import { TabletChamber } from './TabletChamber'
 import { TeleportBeam } from './TeleportBeam'
 import './chambers.css'
@@ -101,9 +102,11 @@ export class SiteApp {
     try {
       await hydrateChambers(this.root)
       this.film.bind()
+      new PhotoLightbox(this.root)
     } catch {
       /* keep placeholders */
       this.film.bind()
+      new PhotoLightbox(this.root)
     }
   }
 
