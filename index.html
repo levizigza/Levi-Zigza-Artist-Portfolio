@@ -236,7 +236,7 @@
               <span class="portal-beat"></span>
               <span class="portal-code">03 · MERCURY</span>
               <span class="portal-name">Scripts</span>
-              <span class="portal-sub">Sacred tablet</span>
+              <span class="portal-sub">Manuscripts on the tablet</span>
             </a>
             <a href="#photography" class="portal" data-nav="photography" data-portal="photography">
               <span class="portal-beat"></span>
@@ -584,9 +584,11 @@
             <span class="kt-line accent soft">carved in stone</span>
           </h2>
           <p class="lede">
-            An ancient tablet under Mercury light. Select a manuscript to
-            illuminate its seal - PDFs open in full for reading.
+            Two manuscripts under Mercury light. Each seal opens the full PDF.
           </p>
+          <div class="script-archive" id="script-archive" aria-label="Manuscripts">
+            <!-- hydrated manuscript cards -->
+          </div>
           <div class="tablet-stage" data-chamber="scripts">
             <div class="ancient-tablet" role="region" aria-label="Script tablet">
               <div class="tablet-face">
@@ -595,28 +597,12 @@
                   <span class="tablet-title">LEX · ZIGZA</span>
                   <span class="tablet-seal">※</span>
                 </div>
+                <p class="tablet-hint">Select a manuscript above to light its inscription.</p>
                 <div class="tablet-scroll" id="liturgy-column" tabindex="0">
                   <p class="tablet-line speak">◇ SIGNAL · awaiting carve</p>
-                  <p class="tablet-line">☰ DRAFT · sealed in dust</p>
-                  <p class="tablet-line">彡 TREATMENT · held in orbit</p>
-                  <p class="tablet-line muted">···· page empty ····</p>
-                  <p class="tablet-line muted">···· word unformed ····</p>
-                  <p class="tablet-line muted">···· glyph reserved ····</p>
+                  <p class="tablet-line muted">···· choose a manuscript ····</p>
                 </div>
-                <div class="tablet-scripts">
-                  <button type="button" class="tablet-inscription" data-script="empty">
-                    <span class="inscribe-mark">✎</span>
-                    <span class="altar-label">Page empty</span>
-                  </button>
-                  <button type="button" class="tablet-inscription" data-script="sealed">
-                    <span class="inscribe-mark">☰</span>
-                    <span class="altar-label">Draft sealed</span>
-                  </button>
-                  <button type="button" class="tablet-inscription" data-script="held">
-                    <span class="inscribe-mark">彡</span>
-                    <span class="altar-label">Treatment held</span>
-                  </button>
-                </div>
+                <div class="tablet-scripts" hidden aria-hidden="true"></div>
               </div>
             </div>
           </div>

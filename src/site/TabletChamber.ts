@@ -1,12 +1,6 @@
 /**
- * Mercury scripts chamber — highlight inscriptions on the sacred tablet.
+ * Mercury scripts chamber — manuscript cards light the tablet and open PDFs.
  */
-
-const PLACEHOLDER_LINES: Record<string, string> = {
-  empty: '◇ SIGNAL · awaiting carve',
-  sealed: '☰ DRAFT · sealed in dust',
-  held: '彡 TREATMENT · held in orbit',
-}
 
 export class TabletChamber {
   private root: HTMLElement
@@ -16,38 +10,33 @@ export class TabletChamber {
     this.root = root
     this.scroll = root.querySelector('#liturgy-column')
 
-    root.querySelector('.tablet-scripts')?.addEventListener('click', (e) => {
-      const btn = (e.target as HTMLElement | null)?.closest?.('button.tablet-inscription')
-      if (btn instanceof HTMLButtonElement) this.activate(btn)
+    root.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement | null
+      const card = target?.closest?.('.manuscript-card')
+      if (!(card instanceof HTMLElement)) return
+      e.preventDefault()
+      this.activate(card)
     })
   }
 
-  private activate(btn: HTMLButtonElement): void {
-    const key = btn.dataset.script ?? 'empty'
-    const buttons = this.root.querySelectorAll<HTMLButtonElement>('.tablet-inscription')
-    buttons.forEach((b) => b.classList.toggle('is-active', b === btn))
+  private activate(card: HTMLElement): void {
+    const key = card.dataset.script ?? ''
+    const cards = this.root.querySelectorAll<HTMLElement>('.manuscript-card')
+    cards.forEach((c) => c.classList.toggle('is-active', c === card))
 
     const lines = this.scroll?.querySelectorAll('.tablet-line')
-    if (!lines?.length) return
-
-    const keyed = this.scroll?.querySelectorAll(`.tablet-line[data-script-key="${CSS.escape(key)}"]`)
-    if (keyed?.length) {
+    if (lines?.length && key) {
+      const keyed = this.scroll?.querySelectorAll(
+        `.tablet-line[data-script-key="${CSS.escape(key)}"]`,
+      )
       lines.forEach((line) => (line as HTMLElement).classList.remove('speak'))
-      keyed.forEach((line) => (line as HTMLElement).classList.add('speak'))
-      const first = keyed[0] as HTMLElement
-      first.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-    } else {
-      const target = PLACEHOLDER_LINES[key]
-      lines.forEach((line) => {
-        const el = line as HTMLElement
-        const match = target && el.textContent?.includes(target.slice(0, 8))
-        el.classList.toggle('speak', Boolean(match))
-      })
+      if (keyed?.length) {
+        keyed.forEach((line) => (line as HTMLElement).classList.add('speak'))
+        ;(keyed[0] as HTMLElement).scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      }
     }
 
-    const href = btn.dataset.scriptHref
-    if (href) {
-      window.open(href, '_blank', 'noopener,noreferrer')
-    }
+    const href = card.dataset.scriptHref
+    if (href) window.open(href, '_blank', 'noopener,noreferrer')
   }
 }

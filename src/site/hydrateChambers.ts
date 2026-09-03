@@ -382,13 +382,16 @@ function hydratePhoto(root: HTMLElement, items: ManifestItem[]): void {
     ${sections}`
 }
 
-async function loadScriptPreview(item: ManifestItem): Promise<string[]> {
-  const isPdf =
-    item.mime === 'application/pdf' ||
-    /\.pdf$/i.test(item.path) ||
-    /\.pdf$/i.test(item.originalName || '')
+function isPdfDocument(item: ManifestItem): boolean {
+  if (item.mime === 'application/pdf') return true
+  if (/\.pdf($|\?)/i.test(item.path)) return true
+  if (/\.pdf($|\?)/i.test(item.originalName || '')) return true
+  if (/\.pdf($|\?)/i.test(item.externalUrl || '')) return true
+  return false
+}
 
-  if (isPdf) {
+function scriptPreviewLines(item: ManifestItem): string[] {
+  if (isPdfDocument(item)) {
     return [
       `◇ ${item.title.toUpperCase()}`,
       '☰ MANUSCRIPT · sealed as PDF',
@@ -396,19 +399,22 @@ async function loadScriptPreview(item: ManifestItem): Promise<string[]> {
       '···· pages bound in light ····',
     ]
   }
+  return [item.title]
+}
+
+async function loadScriptPreview(item: ManifestItem): Promise<string[]> {
+  // Never fetch PDF bodies into the tablet — binary dumps look like garbage.
+  if (isPdfDocument(item)) return scriptPreviewLines(item)
 
   try {
     const res = await fetch(item.path)
     if (!res.ok) return [item.title]
+    const type = res.headers.get('content-type') || ''
+    if (/pdf|octet-stream/i.test(type)) return scriptPreviewLines(item)
     const text = (await res.text()).trim()
     if (!text) return [item.title]
-    // Binary PDF mistaken as text — avoid dumping garbage into the tablet
     if (text.startsWith('%PDF') || /[\u0000-\u0008]/.test(text.slice(0, 200))) {
-      return [
-        `◇ ${item.title.toUpperCase()}`,
-        '☰ MANUSCRIPT · sealed as PDF',
-        '彡 FULL TEXT · open the scroll',
-      ]
+      return scriptPreviewLines(item)
     }
     const lines = text
       .split(/\r?\n/)
@@ -421,6 +427,39 @@ async function loadScriptPreview(item: ManifestItem): Promise<string[]> {
   }
 }
 
+function manuscriptTone(item: ManifestItem, index: number): string {
+  const id = `${item.id} ${item.title}`.toLowerCase()
+  if (id.includes('butterfly')) return 'tone-butterfly'
+  if (id.includes('dew')) return 'tone-dewdrop'
+  const tones = ['tone-amber', 'tone-copper', 'tone-clay', 'tone-ink']
+  return tones[index % tones.length]
+}
+
+function manuscriptCardHtml(item: ManifestItem, index: number): string {
+  const pdf = isPdfDocument(item)
+  const href = escapeHtml(item.path)
+  const tone = manuscriptTone(item, index)
+  const num = String(index + 1).padStart(2, '0')
+  return `
+    <article
+      class="manuscript-card ${tone}"
+      data-script="${escapeHtml(item.id)}"
+      data-script-title="${escapeHtml(item.title)}"
+      data-script-href="${href}"
+      role="button"
+      tabindex="0"
+      aria-label="Open ${escapeHtml(item.title)}"
+    >
+      <div class="manuscript-card-top">
+        <span class="manuscript-num">Manuscript ${num}</span>
+        <span class="manuscript-format">${pdf ? 'PDF' : 'Text'}</span>
+      </div>
+      <h3 class="manuscript-title">${escapeHtml(item.title)}</h3>
+      <p class="manuscript-blurb">${escapeHtml(item.subtitle || 'Script manuscript')}</p>
+      <span class="manuscript-cta">${pdf ? 'Open full manuscript' : 'Read inscription'} ↗</span>
+    </article>`
+}
+
 function hydrateMusic(root: HTMLElement, items: ManifestItem[]): void {
   if (!items.length) return
   const rack = root.querySelector('#cassette-rack')
@@ -431,39 +470,50 @@ function hydrateMusic(root: HTMLElement, items: ManifestItem[]): void {
 async function hydrateScripts(root: HTMLElement, items: ManifestItem[]): Promise<void> {
   if (!items.length) return
   const column = root.querySelector('#liturgy-column')
+  const archive = root.querySelector('#script-archive')
   const scripts = root.querySelector('.tablet-scripts')
-  if (!column || !scripts) return
 
   const allLines: string[] = []
-  const buttons: string[] = []
-
   for (let i = 0; i < items.length; i++) {
     const item = items[i]
     const lines = await loadScriptPreview(item)
     const key = item.id
-    const isPdf =
-      item.mime === 'application/pdf' ||
-      /\.pdf$/i.test(item.path) ||
-      /\.pdf$/i.test(item.originalName || '')
-    const hrefAttr = isPdf ? ` data-script-href="${escapeHtml(item.path)}"` : ''
-    const mark = isPdf ? '☰' : '✎'
-    buttons.push(`
-      <button type="button" class="tablet-inscription${isPdf ? ' is-pdf' : ''}" data-script="${escapeHtml(key)}" data-script-title="${escapeHtml(item.title)}"${hrefAttr}>
-        <span class="inscribe-mark">${mark}</span>
-        <span class="altar-label">${escapeHtml(item.title)}</span>
-        ${isPdf ? '<span class="altar-sub">Open PDF</span>' : ''}
-      </button>`)
-    for (const line of lines.slice(0, 6)) {
+    for (const line of lines.slice(0, 5)) {
       allLines.push(
         `<p class="tablet-line" data-script-key="${escapeHtml(key)}">${escapeHtml(line.slice(0, 160))}</p>`,
       )
     }
   }
 
-  if (allLines.length) {
+  if (column && allLines.length) {
     column.innerHTML = allLines.join('')
   }
-  scripts.innerHTML = buttons.join('')
+
+  if (archive) {
+    archive.innerHTML = items.map((item, i) => manuscriptCardHtml(item, i)).join('')
+    archive.querySelectorAll<HTMLElement>('.manuscript-card').forEach((card) => {
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          card.click()
+        }
+      })
+    })
+  }
+
+  // Keep a hidden fallback list for older markup, if present
+  if (scripts && !archive) {
+    scripts.innerHTML = items
+      .map((item) => {
+        const href = isPdfDocument(item) ? ` data-script-href="${escapeHtml(item.path)}"` : ''
+        return `<button type="button" class="tablet-inscription" data-script="${escapeHtml(item.id)}" data-script-title="${escapeHtml(item.title)}"${href}>
+          <span class="altar-label">${escapeHtml(item.title)}</span>
+        </button>`
+      })
+      .join('')
+  } else if (scripts) {
+    scripts.innerHTML = ''
+  }
 }
 
 export async function hydrateChambers(root: HTMLElement): Promise<Manifest> {
