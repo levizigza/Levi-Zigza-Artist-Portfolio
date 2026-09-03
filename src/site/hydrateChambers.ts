@@ -475,7 +475,7 @@ function manuscriptCardHtml(item: ManifestItem, index: number): string {
         <span class="scroll-wax" aria-hidden="true"></span>
         <span class="scroll-num">Scroll ${num}</span>
         <span class="scroll-title">${escapeHtml(item.title)}</span>
-        <span class="scroll-blurb">${escapeHtml(item.subtitle || 'Script manuscript')}</span>
+        <span class="scroll-blurb">${escapeHtml(item.subtitle || 'Spec script')}</span>
         <span class="scroll-cta">${pdf ? 'Unfurl full PDF' : 'Read inscription'} ↗</span>
       </span>
       <span class="scroll-rod bottom" aria-hidden="true">
@@ -486,6 +486,52 @@ function manuscriptCardHtml(item: ManifestItem, index: number): string {
     </button>`
 }
 
+function commercialCopyHtml(item: ManifestItem, index: number): string {
+  const pdf = isPdfDocument(item)
+  const href = escapeHtml(item.path)
+  const num = String(index + 1).padStart(2, '0')
+  const tones = ['copy-tone-a', 'copy-tone-b', 'copy-tone-c']
+  const tone = tones[index % tones.length]
+  return `
+    <button
+      type="button"
+      class="copy-sheet manuscript-card ${tone}"
+      data-script="${escapeHtml(item.id)}"
+      data-script-title="${escapeHtml(item.title)}"
+      data-script-href="${href}"
+      aria-label="Open ${escapeHtml(item.title)}"
+    >
+      <span class="copy-binder" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </span>
+      <span class="copy-sheet-face">
+        <span class="copy-meta">
+          <span class="copy-num">Spot ${num}</span>
+          <span class="copy-format">${pdf ? 'PDF' : 'COPY'}</span>
+        </span>
+        <span class="copy-title">${escapeHtml(item.title)}</span>
+        <span class="copy-blurb">${escapeHtml(item.subtitle || 'Commercial copy')}</span>
+        <span class="copy-rule" aria-hidden="true"></span>
+        <span class="copy-cta">${pdf ? 'Open spot sheet' : 'Read copy'} ↗</span>
+      </span>
+    </button>`
+}
+
+const SCRIPT_SERIES: { key: string; label: string; note: string; kicker: string }[] = [
+  {
+    key: 'spec-script',
+    label: 'Spec Scripts',
+    note: 'Feature and short manuscripts written on speculation.',
+    kicker: 'Library',
+  },
+  {
+    key: 'commercial-copy',
+    label: 'Commercial Copy',
+    note: 'Ad scripts and spot copy - TV, radio, digital, and brand voice.',
+    kicker: 'Copy desk',
+  },
+]
+
 function hydrateMusic(root: HTMLElement, items: ManifestItem[]): void {
   if (!items.length) return
   const rack = root.querySelector('#cassette-rack')
@@ -494,29 +540,92 @@ function hydrateMusic(root: HTMLElement, items: ManifestItem[]): void {
 }
 
 async function hydrateScripts(root: HTMLElement, items: ManifestItem[]): Promise<void> {
-  if (!items.length) return
   const column = root.querySelector('#liturgy-column')
   const archive = root.querySelector('#script-archive')
   const scripts = root.querySelector('.tablet-scripts')
 
+  const buckets = new Map<string, ManifestItem[]>()
+  for (const item of items) {
+    const key = item.category || 'spec-script'
+    const list = buckets.get(key) ?? []
+    list.push(item)
+    buckets.set(key, list)
+  }
+
   const allLines: string[] = []
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i]
+  for (const item of items) {
     const lines = await loadScriptPreview(item)
-    const key = item.id
     for (const line of lines.slice(0, 5)) {
       allLines.push(
-        `<p class="tablet-line" data-script-key="${escapeHtml(key)}">${escapeHtml(line.slice(0, 160))}</p>`,
+        `<p class="tablet-line" data-script-key="${escapeHtml(item.id)}">${escapeHtml(line.slice(0, 160))}</p>`,
       )
     }
   }
 
-  if (column && allLines.length) {
-    column.innerHTML = allLines.join('')
+  if (column) {
+    column.innerHTML = allLines.length
+      ? allLines.join('')
+      : `<p class="tablet-line speak">◇ SIGNAL · awaiting carve</p>
+         <p class="tablet-line muted">···· choose a manuscript ····</p>`
   }
 
   if (archive) {
-    archive.innerHTML = items.map((item, i) => manuscriptCardHtml(item, i)).join('')
+    const nav: string[] = []
+    const sections: string[] = []
+    let seriesNum = 0
+
+    for (const series of SCRIPT_SERIES) {
+      const list = buckets.get(series.key) ?? []
+      // Always show Spec Scripts; always show Commercial Copy (even empty)
+      if (series.key !== 'spec-script' && series.key !== 'commercial-copy' && !list.length) {
+        continue
+      }
+      buckets.delete(series.key)
+      seriesNum++
+      const num = String(seriesNum).padStart(2, '0')
+      const id = `series-${series.key}`
+      nav.push(
+        `<a class="script-series-jump" href="#${id}"><span class="script-series-jump-num">${num}</span><span class="script-series-jump-label">${escapeHtml(series.label)}</span></a>`,
+      )
+
+      const isCommercial = series.key === 'commercial-copy'
+      const cards = list.length
+        ? list
+            .map((item, i) =>
+              isCommercial ? commercialCopyHtml(item, i) : manuscriptCardHtml(item, i),
+            )
+            .join('')
+        : `<div class="script-empty" role="status">
+            <p class="script-empty-kicker">${isCommercial ? 'Copy desk' : 'Library'}</p>
+            <p class="script-empty-title">${isCommercial ? 'Spot sheets incoming' : 'Scrolls awaiting carve'}</p>
+            <p class="script-empty-note">${isCommercial ? 'Ad scripts and commercial copy will hang here.' : 'Spec manuscripts will hang here.'}</p>
+          </div>`
+
+      sections.push(`
+        <section class="script-series${isCommercial ? ' script-series-copy' : ''}" id="${id}" data-series="${series.key}">
+          <header class="script-series-head">
+            <p class="script-series-kicker">${escapeHtml(series.kicker)} ${num}</p>
+            <h3 class="script-series-title">${escapeHtml(series.label)}</h3>
+            <p class="script-series-note">${escapeHtml(series.note)}</p>
+          </header>
+          ${isCommercial ? '' : '<div class="script-shelf" aria-hidden="true"><span class="shelf-plank"></span></div>'}
+          <div class="${isCommercial ? 'copy-rack' : 'script-scrolls'}">${cards}</div>
+        </section>`)
+    }
+
+    archive.innerHTML = `
+      <nav class="script-series-nav" aria-label="Script series">${nav.join('')}</nav>
+      ${sections.join('')}`
+
+    archive.querySelectorAll<HTMLAnchorElement>('.script-series-jump').forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault()
+        const target = link.getAttribute('href')?.replace(/^#/, '')
+        if (!target) return
+        document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    })
+
     archive.querySelectorAll<HTMLElement>('.manuscript-card').forEach((card) => {
       card.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -527,7 +636,6 @@ async function hydrateScripts(root: HTMLElement, items: ManifestItem[]): Promise
     })
   }
 
-  // Keep a hidden fallback list for older markup, if present
   if (scripts && !archive) {
     scripts.innerHTML = items
       .map((item) => {

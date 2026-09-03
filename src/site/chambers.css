@@ -1271,7 +1271,271 @@
   position: relative;
   z-index: 1;
   max-width: 560px;
-  margin: 1.75rem auto 0;
+  margin: 2.25rem auto 0;
+}
+
+.script-archive {
+  position: relative;
+  z-index: 2;
+  max-width: 860px;
+  margin: 0.35rem auto 0;
+}
+
+.script-series-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.85rem;
+  margin: 0 0 1.5rem;
+  padding: 0.35rem 0 1rem;
+  border-bottom: 1px solid rgba(200, 160, 100, 0.22);
+}
+
+.script-series-jump {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  text-decoration: none;
+  color: rgba(255, 220, 180, 0.72);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid transparent;
+  transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.script-series-jump:hover,
+.script-series-jump:focus-visible {
+  color: #ffe7c4;
+  border-bottom-color: rgba(230, 180, 110, 0.55);
+  outline: none;
+}
+
+.script-series-jump-num {
+  color: rgba(220, 160, 90, 0.9);
+}
+
+.script-series {
+  margin: 0 0 2.5rem;
+  scroll-margin-top: 5.5rem;
+}
+
+.script-series-head {
+  margin: 0 0 1.1rem;
+  max-width: 36rem;
+}
+
+.script-series-kicker {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(220, 170, 100, 0.85);
+}
+
+.script-series-copy .script-series-kicker {
+  color: rgba(160, 190, 220, 0.9);
+}
+
+.script-series-title {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-display, Fraunces, Georgia, serif);
+  font-size: clamp(1.4rem, 2.6vw, 1.9rem);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #ffe6c8;
+}
+
+.script-series-note {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: rgba(255, 220, 190, 0.62);
+}
+
+.script-scrolls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.75rem 1.5rem;
+  padding: 0.5rem 0.5rem 0;
+}
+
+.copy-rack {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.15rem;
+}
+
+.script-empty {
+  padding: 1.4rem 1.25rem;
+  border: 1px dashed rgba(200, 170, 120, 0.35);
+  background: rgba(40, 28, 18, 0.35);
+}
+
+.script-series-copy .script-empty {
+  border-color: rgba(140, 170, 200, 0.35);
+  background: rgba(18, 28, 40, 0.4);
+}
+
+.script-empty-kicker {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(220, 180, 120, 0.75);
+}
+
+.script-empty-title {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display, Fraunces, Georgia, serif);
+  font-size: 1.25rem;
+  color: #f0d8b0;
+}
+
+.script-empty-note {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(255, 220, 190, 0.58);
+}
+
+/* Commercial copy sheets (ad spot / copy deck metaphor) */
+.copy-sheet {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 0.55rem;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.4));
+  transition: transform 0.28s ease, filter 0.28s ease;
+}
+
+.copy-sheet:hover,
+.copy-sheet:focus-visible,
+.copy-sheet.is-active {
+  transform: translateY(-5px) rotate(-0.4deg);
+  filter: drop-shadow(0 20px 32px rgba(80, 120, 180, 0.28));
+  outline: none;
+}
+
+.copy-binder {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  padding: 0.85rem 0;
+}
+
+.copy-binder span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #d0d8e0, #6a7480 60%, #2a3038);
+  box-shadow: inset 0 0 0 2px rgba(20, 24, 30, 0.45);
+}
+
+.copy-sheet-face {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-height: 190px;
+  padding: 1.1rem 1.15rem 1rem;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 19px,
+      rgba(40, 60, 90, 0.08) 19px,
+      rgba(40, 60, 90, 0.08) 20px
+    ),
+    linear-gradient(165deg, #f4f7fb 0%, #dce4f0 55%, #c5d0e0 100%);
+  border: 1px solid rgba(120, 140, 170, 0.45);
+  color: #1a2430;
+}
+
+.copy-tone-b .copy-sheet-face {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 19px,
+      rgba(90, 50, 30, 0.07) 19px,
+      rgba(90, 50, 30, 0.07) 20px
+    ),
+    linear-gradient(165deg, #fbf4ec 0%, #ead7c0 55%, #d8bfa0 100%);
+  color: #2a1c10;
+}
+
+.copy-tone-c .copy-sheet-face {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 19px,
+      rgba(30, 80, 50, 0.07) 19px,
+      rgba(30, 80, 50, 0.07) 20px
+    ),
+    linear-gradient(165deg, #eef8f0 0%, #cfe0d4 55%, #b4ccbc 100%);
+  color: #14241a;
+}
+
+.copy-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.copy-num,
+.copy-format {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.copy-format {
+  border: 1px solid rgba(40, 50, 70, 0.28);
+  padding: 0.18rem 0.35rem;
+}
+
+.copy-title {
+  font-family: var(--font-display, Fraunces, Georgia, serif);
+  font-size: clamp(1.25rem, 2.4vw, 1.55rem);
+  font-weight: 600;
+  line-height: 1.15;
+  max-width: 14ch;
+}
+
+.copy-blurb {
+  font-size: 0.88rem;
+  line-height: 1.4;
+  opacity: 0.78;
+  max-width: 24ch;
+}
+
+.copy-rule {
+  display: block;
+  height: 1px;
+  margin: 0.25rem 0;
+  background: rgba(40, 50, 70, 0.22);
+}
+
+.copy-cta {
+  margin-top: auto;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.85;
 }
 
 .script-shelf {
@@ -1291,17 +1555,6 @@
   background:
     linear-gradient(180deg, #8a6a44, #5a4228 55%, #3a2a18);
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
-}
-
-.script-archive {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.75rem 1.5rem;
-  max-width: 860px;
-  margin: 0.15rem auto 0;
-  padding: 0.5rem 0.5rem 0;
 }
 
 /* Physical manuscript scrolls */
@@ -1626,7 +1879,8 @@
 }
 
 @media (max-width: 640px) {
-  .script-archive {
+  .script-scrolls,
+  .copy-rack {
     grid-template-columns: 1fr;
   }
 

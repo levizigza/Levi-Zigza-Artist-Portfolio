@@ -7,8 +7,10 @@
       "path": "/uploads/script/the-butterfly-effect.pdf",
       "mime": "application/pdf",
       "originalName": "The Butterfly Effect.pdf",
-      "subtitle": "Feature manuscript",
-      "createdAt": "2026-09-03T04:50:00.000Z"
+      "subtitle": "Feature spec script",
+      "createdAt": "2026-09-03T04:50:00.000Z",
+      "category": "spec-script",
+      "categoryLabel": "Spec Scripts"
     },
     {
       "id": "script-02",
@@ -17,8 +19,10 @@
       "path": "/uploads/script/dewdrop.pdf",
       "mime": "application/pdf",
       "originalName": "DewDrop.pdf",
-      "subtitle": "Short manuscript",
-      "createdAt": "2026-09-03T04:50:00.000Z"
+      "subtitle": "Short spec script",
+      "createdAt": "2026-09-03T04:50:00.000Z",
+      "category": "spec-script",
+      "categoryLabel": "Spec Scripts"
     },
     {
       "id": "video-mv-01",
