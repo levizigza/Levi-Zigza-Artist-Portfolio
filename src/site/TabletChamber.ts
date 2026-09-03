@@ -1,5 +1,5 @@
 /**
- * Mercury scripts chamber — manuscript cards light the tablet and open PDFs.
+ * Mercury scripts chamber — scroll manuscripts light the tablet and open PDFs.
  */
 
 export class TabletChamber {
@@ -12,7 +12,7 @@ export class TabletChamber {
 
     root.addEventListener('click', (e) => {
       const target = e.target as HTMLElement | null
-      const card = target?.closest?.('.manuscript-card')
+      const card = target?.closest?.('.manuscript-card, .scroll-ms')
       if (!(card instanceof HTMLElement)) return
       e.preventDefault()
       this.activate(card)
@@ -21,7 +21,7 @@ export class TabletChamber {
 
   private activate(card: HTMLElement): void {
     const key = card.dataset.script ?? ''
-    const cards = this.root.querySelectorAll<HTMLElement>('.manuscript-card')
+    const cards = this.root.querySelectorAll<HTMLElement>('.manuscript-card, .scroll-ms')
     cards.forEach((c) => c.classList.toggle('is-active', c === card))
 
     const lines = this.scroll?.querySelectorAll('.tablet-line')

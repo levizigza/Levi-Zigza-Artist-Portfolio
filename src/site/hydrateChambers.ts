@@ -90,7 +90,7 @@ function extractYoutubeId(url: string): string | null {
   return m?.[1] ?? null
 }
 
-function cbcCardHtml(item: ManifestItem): string {
+function cbcCardHtml(item: ManifestItem, index: number): string {
   const kind = item.mime?.includes('html') || item.subtitle?.toLowerCase().includes('article')
     ? 'article'
     : item.provider === 'cbc' && (item.externalUrl || '').includes('/player/')
@@ -101,20 +101,34 @@ function cbcCardHtml(item: ManifestItem): string {
     (kind === 'article' ? 'Article + audio' : kind === 'video' ? 'Broadcast video' : 'CBC News')
   const href = escapeHtml(item.externalUrl || item.path)
   const thumb = item.thumb || ''
-  const thumbHtml = thumb
-    ? `<div class="cbc-card-thumb"><img src="${escapeHtml(thumb)}" alt="" loading="lazy" /></div>`
-    : `<div class="cbc-card-mark">
-        <span class="cbc-wordmark">CBC</span>
-        <span class="cbc-wordmark-sub">News</span>
-      </div>`
+  const camClass = index % 2 === 0 ? 'cam-shoulder' : 'cam-handycam'
+  const lensMedia = thumb
+    ? `<img class="cam-feed" src="${escapeHtml(thumb)}" alt="" loading="lazy" />`
+    : `<div class="cam-feed cam-feed-empty" aria-hidden="true"></div>`
+
   return `
-    <a class="cbc-card cbc-card-${kind}${thumb ? ' has-thumb' : ''}" href="${href}" target="_blank" rel="noopener noreferrer">
-      ${thumbHtml}
-      <div class="cbc-card-body">
-        <p class="cbc-card-kicker">${escapeHtml(formatLabel)}</p>
-        <h4 class="cbc-card-title">${escapeHtml(item.title)}</h4>
-        ${item.credit ? `<p class="cbc-card-credit">${escapeHtml(item.credit)}</p>` : ''}
-        <span class="cbc-card-cta">Open on CBC ↗</span>
+    <a class="news-cam ${camClass} cbc-card-${kind}" href="${href}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(item.title)} - open on CBC">
+      <div class="cam-body">
+        <div class="cam-mic" aria-hidden="true"></div>
+        <div class="cam-viewfinder">
+          <div class="cam-bezel">
+            <div class="cam-lens">
+              ${lensMedia}
+              <span class="cam-vignette" aria-hidden="true"></span>
+              <span class="cam-cross" aria-hidden="true"></span>
+              <span class="cam-rec"><i></i> REC</span>
+              <span class="cam-badge">CBC</span>
+            </div>
+            <span class="cam-ring" aria-hidden="true"></span>
+          </div>
+        </div>
+        <div class="cam-grip" aria-hidden="true"></div>
+        <div class="cam-meta">
+          <p class="cam-kicker">${escapeHtml(formatLabel)}</p>
+          <h4 class="cam-title">${escapeHtml(item.title)}</h4>
+          ${item.credit ? `<p class="cam-credit">${escapeHtml(item.credit)}</p>` : ''}
+          <span class="cam-cta">Watch / read on CBC ↗</span>
+        </div>
       </div>
     </a>`
 }
@@ -198,7 +212,7 @@ function hydrateFilm(root: HTMLElement, items: ManifestItem[]): void {
             <h3 class="video-series-title">${escapeHtml(series.label)}</h3>
             <p class="video-series-note">${escapeHtml(series.note)}</p>
           </header>
-          <div class="cbc-grid">${list.map((item) => cbcCardHtml(item)).join('')}</div>
+          <div class="cbc-grid">${list.map((item, i) => cbcCardHtml(item, i)).join('')}</div>
         </section>`)
     } else {
       const strip = filmStripBlock(series.label, list, frameIndex)
@@ -441,23 +455,33 @@ function manuscriptCardHtml(item: ManifestItem, index: number): string {
   const tone = manuscriptTone(item, index)
   const num = String(index + 1).padStart(2, '0')
   return `
-    <article
-      class="manuscript-card ${tone}"
+    <button
+      type="button"
+      class="scroll-ms manuscript-card ${tone}"
       data-script="${escapeHtml(item.id)}"
       data-script-title="${escapeHtml(item.title)}"
       data-script-href="${href}"
-      role="button"
-      tabindex="0"
       aria-label="Open ${escapeHtml(item.title)}"
     >
-      <div class="manuscript-card-top">
-        <span class="manuscript-num">Manuscript ${num}</span>
-        <span class="manuscript-format">${pdf ? 'PDF' : 'Text'}</span>
-      </div>
-      <h3 class="manuscript-title">${escapeHtml(item.title)}</h3>
-      <p class="manuscript-blurb">${escapeHtml(item.subtitle || 'Script manuscript')}</p>
-      <span class="manuscript-cta">${pdf ? 'Open full manuscript' : 'Read inscription'} ↗</span>
-    </article>`
+      <span class="scroll-rod top" aria-hidden="true">
+        <span class="rod-knob left"></span>
+        <span class="rod-shaft"></span>
+        <span class="rod-knob right"></span>
+      </span>
+      <span class="scroll-parchment">
+        <span class="scroll-motif" aria-hidden="true"></span>
+        <span class="scroll-wax" aria-hidden="true"></span>
+        <span class="scroll-num">Scroll ${num}</span>
+        <span class="scroll-title">${escapeHtml(item.title)}</span>
+        <span class="scroll-blurb">${escapeHtml(item.subtitle || 'Script manuscript')}</span>
+        <span class="scroll-cta">${pdf ? 'Unfurl full PDF' : 'Read inscription'} ↗</span>
+      </span>
+      <span class="scroll-rod bottom" aria-hidden="true">
+        <span class="rod-knob left"></span>
+        <span class="rod-shaft"></span>
+        <span class="rod-knob right"></span>
+      </span>
+    </button>`
 }
 
 function hydrateMusic(root: HTMLElement, items: ManifestItem[]): void {
