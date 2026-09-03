@@ -13,12 +13,13 @@ dist-ssr
 *.local
 .env
 
-# Uploaded media (keep empty manifest)
+# Uploaded media (keep empty dirs; allow committed gallery files for Pages)
 public/uploads/video/*
 public/uploads/photo/*
 public/uploads/audio/*
 public/uploads/script/*
 !public/uploads/**/.gitkeep
+!public/uploads/photo/*.{jpg,jpeg,png,webp,gif}
 
 # Editor directories and files
 .vscode/*

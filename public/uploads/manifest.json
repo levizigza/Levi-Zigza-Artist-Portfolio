@@ -1,3 +1,112 @@
 ﻿{
-  "items": []
+  "items": [
+    {
+      "id": "photo-01",
+      "type": "photo",
+      "title": "Gathering Glance",
+      "path": "/uploads/photo/gathering-glance.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "gathering-glance.jpg"
+    },
+    {
+      "id": "photo-02",
+      "type": "photo",
+      "title": "Table Light",
+      "path": "/uploads/photo/table-light.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "table-light.jpg"
+    },
+    {
+      "id": "photo-03",
+      "type": "photo",
+      "title": "Hayley Photoshoot",
+      "path": "/uploads/photo/hayley-photoshoot.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "hayley-photoshoot.jpg"
+    },
+    {
+      "id": "photo-04",
+      "type": "photo",
+      "title": "Suspended Journey",
+      "path": "/uploads/photo/suspended-journey.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "suspended-journey.jpg"
+    },
+    {
+      "id": "photo-05",
+      "type": "photo",
+      "title": "Between Fingers",
+      "path": "/uploads/photo/between-fingers.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "between-fingers.jpg"
+    },
+    {
+      "id": "photo-06",
+      "type": "photo",
+      "title": "Craft Burger Components",
+      "path": "/uploads/photo/craft-burger-components.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "craft-burger-components.jpg"
+    },
+    {
+      "id": "photo-07",
+      "type": "photo",
+      "title": "Silhouette In Flight",
+      "path": "/uploads/photo/silhouette-in-flight.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "silhouette-in-flight.jpg"
+    },
+    {
+      "id": "photo-08",
+      "type": "photo",
+      "title": "Golden Wanderer",
+      "path": "/uploads/photo/golden-wanderer.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "golden-wanderer.jpg"
+    },
+    {
+      "id": "photo-09",
+      "type": "photo",
+      "title": "Downtown Reflections - Calgary Skyline",
+      "path": "/uploads/photo/downtown-reflections-calgary.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "downtown-reflections-calgary.jpg"
+    },
+    {
+      "id": "photo-10",
+      "type": "photo",
+      "title": "Through Glass",
+      "path": "/uploads/photo/through-glass.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "through-glass.jpg"
+    },
+    {
+      "id": "photo-11",
+      "type": "photo",
+      "title": "Mallard Passage",
+      "path": "/uploads/photo/mallard-passage.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "mallard-passage.jpg"
+    },
+    {
+      "id": "photo-12",
+      "type": "photo",
+      "title": "Construction Gold",
+      "path": "/uploads/photo/construction-gold.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T02:21:50.000Z",
+      "originalName": "construction-gold.jpg"
+    }
+  ]
 }
