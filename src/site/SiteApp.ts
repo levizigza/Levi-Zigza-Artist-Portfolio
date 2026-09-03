@@ -29,7 +29,7 @@ const PLANET_SIGNAL: Record<string, string> = {
   music: 'SATURN · WALKMAN',
   scripts: 'MERCURY · TABLET',
   photography: 'MARS · DARKROOM',
-  technovate: 'NEPTUNE · TECHNOVATE',
+  technovate: 'NEPTUNE · WEB',
 }
 
 const PAGE_IDS = new Set(Object.keys(PLANET_SIGNAL))
