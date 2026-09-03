@@ -1,6 +1,114 @@
 ﻿{
   "items": [
     {
+      "id": "photo-13",
+      "type": "photo",
+      "title": "Mural Stripes",
+      "path": "/uploads/photo/mural-stripes.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "mural-stripes.jpg"
+    },
+    {
+      "id": "photo-14",
+      "type": "photo",
+      "title": "Shaft of Light",
+      "path": "/uploads/photo/shaft-of-light.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "shaft-of-light.jpg"
+    },
+    {
+      "id": "photo-15",
+      "type": "photo",
+      "title": "Harvest Canopy",
+      "path": "/uploads/photo/harvest-canopy.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "harvest-canopy.jpg"
+    },
+    {
+      "id": "photo-16",
+      "type": "photo",
+      "title": "Window Bouquet",
+      "path": "/uploads/photo/window-bouquet.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "window-bouquet.jpg"
+    },
+    {
+      "id": "photo-17",
+      "type": "photo",
+      "title": "Neon Spectrum",
+      "path": "/uploads/photo/neon-spectrum.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "neon-spectrum.jpg"
+    },
+    {
+      "id": "photo-18",
+      "type": "photo",
+      "title": "Dual Glow",
+      "path": "/uploads/photo/dual-glow.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "dual-glow.jpg"
+    },
+    {
+      "id": "photo-19",
+      "type": "photo",
+      "title": "Red Blue Recline",
+      "path": "/uploads/photo/red-blue-recline.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "red-blue-recline.jpg"
+    },
+    {
+      "id": "photo-20",
+      "type": "photo",
+      "title": "Mirrored Neon",
+      "path": "/uploads/photo/mirrored-neon.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "mirrored-neon.jpg"
+    },
+    {
+      "id": "photo-21",
+      "type": "photo",
+      "title": "Grass Field",
+      "path": "/uploads/photo/grass-field.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "grass-field.jpg"
+    },
+    {
+      "id": "photo-22",
+      "type": "photo",
+      "title": "Party Defiance",
+      "path": "/uploads/photo/party-defiance.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "party-defiance.jpg"
+    },
+    {
+      "id": "photo-23",
+      "type": "photo",
+      "title": "Ivy Pillar",
+      "path": "/uploads/photo/ivy-pillar.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "ivy-pillar.jpg"
+    },
+    {
+      "id": "photo-24",
+      "type": "photo",
+      "title": "Gemstone Profile",
+      "path": "/uploads/photo/gemstone-profile.jpg",
+      "mime": "image/jpeg",
+      "createdAt": "2026-09-03T04:09:00.000Z",
+      "originalName": "gemstone-profile.jpg"
+    },
+    {
       "id": "photo-01",
       "type": "photo",
       "title": "Gathering Glance",
