@@ -116,8 +116,10 @@ function cbcCardHtml(item: ManifestItem, index: number): string {
               ${lensMedia}
               <span class="cam-vignette" aria-hidden="true"></span>
               <span class="cam-cross" aria-hidden="true"></span>
-              <span class="cam-rec"><i></i> REC</span>
-              <span class="cam-badge">CBC</span>
+              <span class="cam-hud" aria-hidden="true">
+                <span class="cam-rec"><i></i> REC</span>
+                <span class="cam-badge">CBC</span>
+              </span>
             </div>
             <span class="cam-ring" aria-hidden="true"></span>
           </div>

@@ -399,18 +399,17 @@
 }
 
 .cam-rec {
-  position: absolute;
-  left: 10%;
-  top: 10%;
-  z-index: 2;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.62rem;
   letter-spacing: 0.14em;
-  color: #ffd0d0;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  color: #ffe0e0;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.7);
+  padding: 0.2rem 0.35rem;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .cam-rec i {
@@ -420,6 +419,7 @@
   background: #e82020;
   box-shadow: 0 0 8px #e82020;
   animation: cam-rec-blink 1.2s steps(2) infinite;
+  flex-shrink: 0;
 }
 
 @keyframes cam-rec-blink {
@@ -428,18 +428,41 @@
 }
 
 .cam-badge {
-  position: absolute;
-  right: 10%;
-  top: 10%;
-  z-index: 2;
   font-family: var(--font-display, Georgia, serif);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   color: #fff;
   background: #e82020;
-  padding: 0.16rem 0.35rem 0.1rem;
+  padding: 0.2rem 0.4rem 0.14rem;
   line-height: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.cam-hud {
+  position: absolute;
+  z-index: 3;
+  top: 12%;
+  left: 10%;
+  right: 10%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+/* Keep HUD fully inside the circular lens (corner % positions get clipped) */
+.cam-shoulder .cam-hud {
+  top: 18%;
+  left: 18%;
+  right: 18%;
+}
+
+.cam-handycam .cam-hud {
+  top: 10%;
+  left: 8%;
+  right: 8%;
 }
 
 .cam-ring {
