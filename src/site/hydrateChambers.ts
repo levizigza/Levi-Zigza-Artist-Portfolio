@@ -155,6 +155,12 @@ const VIDEO_SERIES: { key: string; label: string; note: string; kicker: string }
     kicker: 'Reel',
   },
   {
+    key: 'animation',
+    label: 'Animation',
+    note: 'Motion graphics, animated stories, and illustrated frames.',
+    kicker: 'Reel',
+  },
+  {
     key: 'cbc-news',
     label: 'CBC News',
     note: 'Published CBC Calgary work - framed through the news camera lens.',
