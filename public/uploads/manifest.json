@@ -139,6 +139,26 @@
       "thumb": "/uploads/video/cbc-autism-art-voice.jpg"
     },
     {
+      "id": "audio-01",
+      "type": "audio",
+      "title": "HALO",
+      "path": "/uploads/audio/halo.mp3",
+      "mime": "audio/mpeg",
+      "originalName": "HALO.wav",
+      "createdAt": "2026-09-07T06:02:45.837Z",
+      "provider": "local"
+    },
+    {
+      "id": "audio-02",
+      "type": "audio",
+      "title": "Your Algorithm",
+      "path": "/uploads/audio/your-algorithm.mp3",
+      "mime": "audio/mpeg",
+      "originalName": "Your Algorithm.wav",
+      "createdAt": "2026-09-07T06:02:45.837Z",
+      "provider": "local"
+    },
+    {
       "id": "script-01",
       "type": "script",
       "title": "The Butterfly Effect",

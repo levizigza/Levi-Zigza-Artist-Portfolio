@@ -149,11 +149,13 @@ export class CassetteDeck {
     this.deck?.classList.add('is-loaded')
 
     this.audio?.pause()
+    const uploaded = Boolean(tape.dataset.src)
     const src =
       tape.dataset.src || withBase(`/audio/${tape.dataset.track ?? 'track'}.mp3`)
     this.audio = new Audio(src)
     this.audio.preload = 'none'
-    this.audio.loop = true
+    // Real cassette uploads play once; placeholder tones keep looping.
+    this.audio.loop = !uploaded
     this.audio.addEventListener('ended', () => this.stop())
     this.audio.addEventListener('error', () => {
       /* fall back to procedural tone on play */
