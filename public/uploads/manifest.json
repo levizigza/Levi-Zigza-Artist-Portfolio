@@ -49,6 +49,18 @@
       "createdAt": "2026-09-03T04:30:00.000Z"
     },
     {
+      "id": "video-music-05",
+      "type": "video",
+      "title": "Ario - No Vibe Killaz (M/V)",
+      "path": "https://i.ytimg.com/vi/O7bdXxHiGgE/hqdefault.jpg",
+      "externalUrl": "https://www.youtube.com/watch?v=O7bdXxHiGgE",
+      "provider": "youtube",
+      "youtubeId": "O7bdXxHiGgE",
+      "category": "music-video",
+      "categoryLabel": "Music Videos",
+      "createdAt": "2026-09-07T01:10:39.085Z"
+    },
+    {
       "id": "video-mv-02",
       "type": "video",
       "title": "Calgary Poetry Slam Promo",
