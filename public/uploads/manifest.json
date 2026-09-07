@@ -85,6 +85,18 @@
       "createdAt": "2026-09-06T23:44:25.111Z"
     },
     {
+      "id": "video-anim-02",
+      "type": "video",
+      "title": "The Butterfly Effect (Concept Trailer)",
+      "path": "https://i.ytimg.com/vi/2q2t_DL3VRM/hqdefault.jpg",
+      "externalUrl": "https://www.youtube.com/watch?v=2q2t_DL3VRM",
+      "provider": "youtube",
+      "youtubeId": "2q2t_DL3VRM",
+      "category": "animation",
+      "categoryLabel": "Animation",
+      "createdAt": "2026-09-07T00:06:18.677Z"
+    },
+    {
       "id": "video-cbc-01",
       "type": "video",
       "title": "Ancient artifacts - Calgary residents co-create cultural exhibits with the Glenbow Museum",
