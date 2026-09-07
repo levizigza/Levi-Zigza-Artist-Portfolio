@@ -21,7 +21,10 @@ public/uploads/script/*
 !public/uploads/**/.gitkeep
 !public/uploads/photo/*.{jpg,jpeg,png,webp,gif}
 !public/uploads/video/*.{jpg,jpeg,png,webp,gif}
-!public/uploads/audio/*.{mp3,wav,ogg,m4a}
+!public/uploads/audio/*.mp3
+!public/uploads/audio/*.wav
+!public/uploads/audio/*.ogg
+!public/uploads/audio/*.m4a
 !public/uploads/script/*.{txt,md,pdf}
 
 # Local tooling (ffmpeg, etc.)
