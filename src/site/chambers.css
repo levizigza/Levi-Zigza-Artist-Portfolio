@@ -242,7 +242,7 @@
 
 .cbc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: 1.5rem 1.25rem;
   align-items: start;
 }
@@ -250,6 +250,8 @@
 /* CBC stories framed in news-camera viewfinders */
 .news-cam {
   display: block;
+  min-width: 0;
+  overflow-x: clip;
   text-decoration: none;
   color: inherit;
   perspective: 900px;
@@ -510,6 +512,7 @@
   line-height: 1.35;
   font-weight: 560;
   color: #ffe8e0;
+  overflow-wrap: anywhere;
 }
 
 .cam-credit {
@@ -530,8 +533,8 @@
 .video-lightbox {
   padding: 0;
   border: 0;
-  max-width: none;
-  max-height: none;
+  max-width: calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right));
+  max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   width: min(96vw, 1080px);
   background: transparent;
   color: #ffe8df;
@@ -549,7 +552,8 @@
 
 .video-lightbox-stage {
   position: relative;
-  width: 100%;
+  width: min(100%, calc((100dvh - 9.5rem) * 16 / 9));
+  margin-inline: auto;
   aspect-ratio: 16 / 9;
   background: #0a0604;
   box-shadow:
@@ -1012,7 +1016,7 @@
 /* Cassette rack — portable audio shells */
 .cassette-rack {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 148px), 1fr));
   gap: 1.15rem 1rem;
 }
 
@@ -1357,14 +1361,14 @@
 
 .script-scrolls {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   gap: 1.75rem 1.5rem;
   padding: 0.5rem 0.5rem 0;
 }
 
 .copy-rack {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 1.15rem;
 }
 
@@ -2094,7 +2098,7 @@
 
 .hanging-prints {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 168px), 1fr));
   gap: 1.35rem 1.15rem;
   padding-top: 0.85rem;
   max-width: none;
@@ -2264,8 +2268,8 @@
 .photo-lightbox {
   padding: 0;
   border: 0;
-  max-width: none;
-  max-height: none;
+  max-width: calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right));
+  max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   width: min(96vw, 1200px);
   background: transparent;
   color: #ffe8df;
@@ -2280,14 +2284,15 @@
   position: relative;
   display: grid;
   place-items: center;
-  min-height: min(86vh, 900px);
+  min-height: min(86dvh, 900px);
+  max-height: 100dvh;
   padding: 3.25rem 3.5rem 4.5rem;
 }
 
 .photo-lightbox-img {
   display: block;
   max-width: min(88vw, 1080px);
-  max-height: min(78vh, 820px);
+  max-height: min(70dvh, 820px);
   width: auto;
   height: auto;
   object-fit: contain;
@@ -2573,7 +2578,8 @@ html.lightbox-open {
 
 /* ——— About / Earth — interactive Head Museum jar case ——— */
 .about-living {
-  inset: -2rem -8vw;
+  inset: 0;
+  overflow: hidden;
 }
 
 .about-orbit {
@@ -2647,7 +2653,7 @@ html.lightbox-open {
   isolation: isolate;
   perspective: 1400px;
   perspective-origin: 50% 40%;
-  touch-action: none;
+  touch-action: pan-y;
   cursor: grab;
 }
 
@@ -3373,6 +3379,21 @@ html.lightbox-open {
   }
 }
 
+@media (pointer: coarse) {
+  .video-series-jump,
+  .photo-series-jump,
+  .script-series-jump {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.45rem 0.1rem;
+  }
+
+  .about-tilt-hint {
+    display: none;
+  }
+}
+
 @media (max-width: 760px) {
   .about-stage {
     grid-template-columns: 1fr;
@@ -3384,6 +3405,27 @@ html.lightbox-open {
     top: auto;
     width: min(100%, 430px);
     margin: 0 auto;
+    overflow-x: clip;
+  }
+
+  .about-copy,
+  .about-dossier,
+  .about-stage {
+    min-width: 0;
+    overflow-x: clip;
+  }
+
+  .about-jar-halo {
+    inset: 6% 0 12%;
+  }
+
+  .dossier-entry,
+  .dossier-belief {
+    transform: none;
+  }
+
+  .about-tilt-hint {
+    display: none;
   }
 
   .about-projector-label-a {
@@ -3436,6 +3478,17 @@ html.lightbox-open {
 
   .dossier-project-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1200px) {
+  .video-series-jump,
+  .photo-series-jump,
+  .script-series-jump {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.45rem 0.1rem;
   }
 }
 

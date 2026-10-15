@@ -93,6 +93,7 @@ export class AboutJar {
   }
 
   private onPointerDown = (e: PointerEvent): void => {
+    if (e.pointerType === 'touch') return
     this.pointerId = e.pointerId
     this.wrap?.setPointerCapture?.(e.pointerId)
     this.active = true
